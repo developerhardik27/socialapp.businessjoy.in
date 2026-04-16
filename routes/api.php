@@ -869,7 +869,7 @@ Route::middleware(['checkToken'])->group(function () {
         Route::put('/deletefamilyrelation/{id}', 'destory')->name('familyrelation.destroy');
     });
 
-    $businessCategoryController = getversion('businessCategoryController');
+    $businessCategoryController = getversion('BusinessCategoryController');
     Route::controller($businessCategoryController)->group(function () {
         Route::get('/businesscategory', 'index')->name('businesscategory.index');
         Route::post('/addbusinesscategory', 'store')->name('businesscategory.store');
@@ -879,7 +879,7 @@ Route::middleware(['checkToken'])->group(function () {
         Route::put('/deletebusinesscategory/{id}', 'destory')->name('businesscategory.destroy');
     });
 
-    $businessSubCategoryController = getversion('businessSubCategoryController');
+    $businessSubCategoryController = getversion('BusinessSubCategoryController');
     Route::controller($businessSubCategoryController)->group(function () {
         Route::get('/businesssubcategory', 'index')->name('businesssubcategory.index');
         Route::post('/addbusinesssubcategory', 'store')->name('businesssubcategory.store');

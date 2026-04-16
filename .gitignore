@@ -21,6 +21,7 @@ yarn-error.log
 /.vscode 
 tests/ 
 .env.testing
+public.zip
 
 
  

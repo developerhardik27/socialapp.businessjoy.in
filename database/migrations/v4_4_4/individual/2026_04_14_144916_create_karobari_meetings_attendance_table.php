@@ -17,7 +17,7 @@ return new class extends Migration
             $table->text('family_person_id')->nullable();
             $table->text('karobari_member_id')->nullable();
             $table->text('member_id')->nullable();
-            $table->text('status')->nullable();
+            $table->string('status')->nullable();
             $table->integer('created_by')->nullable();
             $table->integer('updated_by')->nullable();
             $table->integer('is_deleted')->default(0);

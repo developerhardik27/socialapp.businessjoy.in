@@ -42,7 +42,7 @@ class companyController extends commonController
         $this->logistic_settingModel = $this->getmodel('logistic_setting');
         $this->blog_settingModel = $this->getmodel('blog_setting');
         $this->lead_settingModel = $this->getmodel('lead_setting');
-        $this->account_other_settingModel = $this->getmodel('account_other_settings');
+        $this->account_other_settingModel = $this->getmodel('account_other_setting');
     }
 
     // for using pdf 
@@ -290,21 +290,15 @@ class companyController extends commonController
 
             if ($baseUrl === 'localhost:8000') {
                 // If the host is localhost
-                $this->newdbname = 'bj_local_' . $modifiedname . '_' . Str::lower(Str::random(3));
+                $this->newdbname = 'socialapp_bj_' . $modifiedname . '_' . Str::lower(Str::random(3));
                 if (app()->environment('testing')) {
                     $this->newdbname = "testing_company";
                 }
-            } elseif ($baseUrl === 'staging.businessjoy.in') {
-                // If the host is staging.businessjoy.in
-                $this->newdbname = 'staging_business_joy_' . $modifiedname . '_' . Str::lower(Str::random(3));
-                if (app()->environment('testing')) {
-                    $this->newdbname = "staging_business_joy_testing_company";
-                }
             } else {
                 // For any other host, provide a default
-                $this->newdbname = 'business_joy_' . $modifiedname . '_' . Str::lower(Str::random(3));
+                $this->newdbname = 'socialapp_bj_' . $modifiedname . '_' . Str::lower(Str::random(3));
                 if (app()->environment('testing')) {
-                    $this->newdbname = "business_joy_testing_company";
+                    $this->newdbname = "socialapp_bj_testing_company";
                 }
             }
 
@@ -991,8 +985,8 @@ class companyController extends commonController
         $incomeDropdown = json_encode(["account"]);
         $expenseDropdown = json_encode(["account"]);                                   
         $this->account_other_settingModel::create([  // default account other settings create
-            'income_dropdown' => $incomeDropdown,
-            'expense_dropdown' => $expenseDropdown,
+            'income_customer_dropdown' => $incomeDropdown,
+            'expense_customer_dropdown' => $expenseDropdown,
             'created_by' => $userId,
         ]);
     }
