@@ -4,6 +4,9 @@ namespace App\Http\Controllers\v4_4_4\api;
 
 use App\Http\Controllers\Controller;
 use App\Models\v4_4_4\FamilyRelation;
+use App\Models\v4_4_4\Family;
+use App\Models\v4_4_4\FamilyPerson;
+use App\Models\v4_4_4\Member;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -65,7 +68,12 @@ class familyrelationController extends commonController
             return $this->successresponse(500, 'message', 'You are Unauthorized');
         }
         // dd($request->all());
-        
+        $validator = Validator::make($request->all(), [
+            'relation' => 'required|string|max:255',
+        ]);
+        if ($validator->fails()) {
+            return $this->successresponse(422, 'message', $validator->errors()->first());
+        }
         $familyrelation = $this->familyrelationModel::create(
             [
                 'relation' => $request->relation,
@@ -105,6 +113,12 @@ class familyrelationController extends commonController
     {
         if ($this->rp['societymodule']['familyrelation']['edit'] != 1) {
             return $this->successresponse(500, 'message', 'You are Unauthorized');
+        }
+        $validator = Validator::make($request->all(), [
+            'relation' => 'required|string|max:255',
+        ]);
+        if ($validator->fails()) {
+            return $this->successresponse(422, 'message', $validator->errors()->first());
         }
         $familyrelation = $this->familyrelationModel::find($id);
         if(!$familyrelation){

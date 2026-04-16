@@ -65,8 +65,17 @@ class BusinessSubCategoryController extends commonController
     }
     public function store(Request $request)
     {
+        if ($this->rp['societymodule']['businessubcategory']['add'] != 1) {
+            return $this->successresponse(500, 'message', 'You are Unauthorized');
+        }
         // dd($request->all());
-        
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'category_id' => 'required',
+        ]);
+        if ($validator->fails()) {
+            return $this->successresponse(422, 'message', $validator->errors()->first());
+        }
         $businesssubcategory = $this->businesssubcategoryModel::create(
             [
                 'name' => $request->name,
@@ -83,6 +92,9 @@ class BusinessSubCategoryController extends commonController
     }
     public function show($id)
     {
+        if ($this->rp['societymodule']['businessubcategory']['view'] != 1) {
+            return $this->successresponse(500, 'message', 'You are Unauthorized');
+        }
         $businesssubcategory = $this->businesssubcategoryModel::leftJoin('business_category', 'business_sub_category.category_id', '=', 'business_category.id')
             ->where('business_sub_category.id', $id)
             ->select('business_sub_category.*', 'business_category.name as business_category_name')
@@ -109,6 +121,13 @@ class BusinessSubCategoryController extends commonController
             return $this->successresponse(500, 'message', 'You are Unauthorized');
         }
         $businesssubcategory = $this->businesssubcategoryModel::find($id);
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'category_id' => 'required',
+        ]);
+        if ($validator->fails()) {
+            return $this->successresponse(422, 'message', $validator->errors()->first());
+        }
         if(!$businesssubcategory){
             return $this->errorresponse(404, 'message', 'No such business subcategory not found!');
         }

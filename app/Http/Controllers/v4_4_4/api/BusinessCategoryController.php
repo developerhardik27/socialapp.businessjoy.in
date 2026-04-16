@@ -64,7 +64,12 @@ class BusinessCategoryController extends commonController
             return $this->successresponse(500, 'message', 'You are Unauthorized');
         }
         // dd($request->all());
-        
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+        ]);
+        if ($validator->fails()) {
+            return $this->successresponse(422, 'message', $validator->errors()->first());
+        }
         $businesscategory = $this->businesscategoryModel::create(
             [
                 'name' => $request->name,
@@ -80,6 +85,9 @@ class BusinessCategoryController extends commonController
     }
    public function show($id)
     {
+        if ($this->rp['societymodule']['businesscategory']['view'] != 1) {
+            return $this->successresponse(500, 'message', 'You are Unauthorized');
+        }
         $data = $this->businesscategoryModel
             ::leftJoin('business_sub_category', 'business_category.id', '=', 'business_sub_category.category_id')
             ->where('business_category.id', $id)
@@ -115,7 +123,8 @@ class BusinessCategoryController extends commonController
     }
     public function edit($id)
     {
-        if ($this->rp['societymodule']['businesscategory']['edit'] != 1) {
+
+    if ($this->rp['societymodule']['businesscategory']['edit'] != 1) {
             return $this->successresponse(500, 'message', 'You are Unauthorized');
         }
         $businesscategory = $this->businesscategoryModel::find($id);
@@ -128,6 +137,12 @@ class BusinessCategoryController extends commonController
     {
         if ($this->rp['societymodule']['businesscategory']['edit'] != 1) {
             return $this->successresponse(500, 'message', 'You are Unauthorized');
+        }
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+        ]);
+        if ($validator->fails()) {
+            return $this->successresponse(422, 'message', $validator->errors()->first());
         }
         $businesscategory = $this->businesscategoryModel::find($id);
         if(!$businesscategory){
