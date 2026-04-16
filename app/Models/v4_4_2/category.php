@@ -1,0 +1,16 @@
+<?php
+
+namespace App\Models\v4_4_2;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class category extends Model
+{
+    use HasFactory;
+    protected $connection = 'dynamic_connection';
+
+    protected $table = 'category';
+
+    public $guarded = [];
+}

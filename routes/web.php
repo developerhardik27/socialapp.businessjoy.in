@@ -1,0 +1,505 @@
+<?php
+
+use Illuminate\Http\Response;
+use App\Http\Middleware\CheckSession;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\admin\HomeController;
+use App\Http\Controllers\admin\AmazonController;
+use App\Http\Controllers\admin\AdminLoginController;
+use App\Http\Controllers\landing\LandingPageController;
+use App\Http\Controllers\v4_3_2\admin\HrController;
+
+Route::get('checkphp', function () {});
+
+// Define a function to generate the controller class name based on the session value
+if (!function_exists('getadminversion')) {
+    function getadminversion($controller)
+    {
+        if (session_status() !== PHP_SESSION_ACTIVE)
+            session_start();
+        if (isset($_SESSION['folder_name'])) {
+            $version = $_SESSION['folder_name'];
+            return 'App\\Http\\Controllers\\' . $version . '\\admin\\' . $controller;
+        } else {
+            return 'App\\Http\\Controllers\\v4_4_1\\admin\\' . $controller;
+        }
+    }
+}
+
+
+Route::get('/', function () {
+    return view('welcome');
+});
+
+Route::get('/downloadmaintemplate', function () {
+    $path = public_path('admin/templates/maintemplate.zip');
+
+    if (!file_exists($path)) {
+        abort(404, 'File not found');
+    }
+
+    return response()->download($path, 'main-template.zip');
+})->name('admin.downloadmaintemplate');
+
+Route::get('/become-a-partner', function () {
+    return view('become-a-partner-form');
+})->withoutMiddleware([CheckSession::class]);
+
+Route::post('/store-a-partner', [LandingPageController::class, 'storeNewPartner'])->name('admin.storenewpartner')->withoutMiddleware([CheckSession::class]);
+
+Route::get('/privacyandpolicies', function () {
+    return view('privacypolicy');
+})->name('privacypolicy')->withoutMiddleware([CheckSession::class]);
+
+Route::get('/termsandconditions', function () {
+    return view('termsandconditions');
+})->name('termsandconditions')->withoutMiddleware([CheckSession::class]);
+
+Route::get('/faq', function () {
+    return view('faq');
+})->name('faq')->withoutMiddleware([CheckSession::class]);
+
+Route::post('/new', [LandingPageController::class, 'new'])->name('admin.new')->withoutMiddleware([CheckSession::class]);
+
+Route::group(['middleware' => ['CheckSession']], function () {
+    // Your protected routes here...
+
+    Route::get('/dashboard', function () {
+        return view('dashboard');
+    })->middleware(['auth', 'verified'])->name('dashboard');
+
+    require __DIR__ . '/auth.php';
+
+    // admin panel ui route
+
+    Route::group(['prefix' => 'admin'], function () {
+
+        Route::get('/welcome', function () {
+            if (session()->has('folder_name')) {
+                // If set, return the view based on the session variable
+                return view(session('folder_name') . '.admin.welcome');
+            } else {
+                // If not set, return the admin.login view
+                return redirect()->route('admin.login')->with('error', 'Session Expired');
+            }
+        })->name('admin.welcome');
+
+        Route::controller(AmazonController::class)->group(function () {
+            Route::get('/amazon/callback', 'amazoncallback')->name('amazon.callback');
+        });
+
+        Route::get('/setmenusession', [AdminLoginController::class, 'setmenusession'])->name('admin.setmenusession');
+
+        Route::group(['middleware' => 'admin.guest'], function () {
+            Route::controller(AdminLoginController::class)->group(function () {
+                Route::get('/login', 'index')->name('admin.login')->withoutMiddleware([CheckSession::class]);
+                Route::match(['get', 'post'], '/authenticate/{id?}', 'authenticate')->name('admin.authenticate')->withoutMiddleware([CheckSession::class]);
+                Route::get('/forgotpassword', 'forgot')->name('admin.forgot')->withoutMiddleware([CheckSession::class]);
+                Route::post('/forgotpassword', 'forgot_password')->name('admin.forgotpassword')->withoutMiddleware([CheckSession::class]);
+                Route::get('/reset/{token}', 'reset_password')->name('admin.resetpassword')->withoutMiddleware([CheckSession::class]);
+                Route::post('/reset/{token}', 'post_reset_password')->name('admin.post_resetpassword')->withoutMiddleware([CheckSession::class]);
+                Route::get('/setpassword/{token}', 'set_password')->name('admin.setpassword')->withoutMiddleware([CheckSession::class]);
+                Route::post('/setpassword/{token}', 'post_set_password')->name('admin.post_setpassword')->withoutMiddleware([CheckSession::class]);
+            });
+        });
+
+        Route::group(['middleware' => 'admin.auth'], function () {
+
+            Route::get('/superadminloginfromanyuser/{userId}', [AdminLoginController::class, 'authenticate'])->name('admin.superadminloginfromanyuser');
+
+            Route::controller(HomeController::class)->group(function () {
+                Route::get('/index', 'index')->name('admin.index');
+                Route::get('/logout', 'logout')->name('admin.logout');
+                Route::get('/singlelogout', 'singlelogout')->name('admin.singlelogout');
+            });
+
+            // admin module routes start
+            // company route 
+            $CompanyController = getadminversion('CompanyController');
+            Route::controller($CompanyController)->group(function () {
+                Route::get('/Company', 'index')->name('admin.company')->middleware('checkPermission:adminmodule,company,show');
+                Route::get('/AddNewCompany', 'create')->name('admin.addcompany')->middleware('checkPermission:adminmodule,company,add');
+                Route::get('/EditCompany/{id}', 'edit')->name('admin.editcompany')->middleware('checkPermission:adminmodule,company,edit');
+                Route::get('/companyprofile/{id}', 'companyprofile')->name('admin.companyprofile');
+                Route::get('/EditCompanyprofile/{id}', 'editcompany')->name('admin.editcompanyprofile')->middleware('checkPermission:adminmodule,company,edit');
+                Route::get('/ApiAuthorization', 'api_authorization')->name('admin.api_authorization');
+                Route::get('/ManageParentCompany', 'parentcompany')->name('admin.parentcompany')->middleware('checkPermission:adminmodule,company,edit');
+            });
+
+            // user route 
+            $UserController = getadminversion('UserController');
+            Route::controller($UserController)->group(function () {
+                Route::get('/MyLoginHistory/{id}', 'loginhistory')->name('admin.myloginhistory')->middleware('checkPermission:adminmodule,loginhistory,show');
+                Route::get('/User', 'index')->name('admin.user')->middleware('checkPermission:adminmodule,user,show');
+                Route::get('/AddNewUser', 'create')->name('admin.adduser')->middleware('checkPermission:adminmodule,user,add');
+                Route::get('/EditUser/{id}', 'edit')->name('admin.edituser')->middleware('checkPermission:adminmodule,user,edit');
+                Route::get('/EditUserdetail/{id}', 'edituser')->name('admin.edituserdetail')->middleware('checkPermission:adminmodule,user,edit');
+                Route::get('/userprofile/{id}', 'profile')->name('admin.userprofile');
+
+                Route::get('/UserPermissionGroup', 'userrolepermission')->name('admin.userrolepermission')->middleware('checkPermission:adminmodule,userpermission,show');
+                Route::get('/AddNewUserPermissionGroup', 'createuserrolepermission')->name('admin.adduserrolepermission')->middleware('checkPermission:adminmodule,userpermission,add');
+                Route::get('/EditUserPermissionGroup/{id}', 'edituserrolepermission')->name('admin.edituserrolepermission')->middleware('checkPermission:adminmodule,userpermission,edit');
+            });
+
+            $VersionUpdateController = getadminversion('VersionUpdateController');
+            Route::controller($VersionUpdateController)->group(function () {
+                Route::get('/VersionControl', 'versioncontrol')->name('admin.versionupdate');
+            });
+
+            $PackageController = getadminversion('PackageController');
+            Route::controller($PackageController)->group(function () {
+                Route::get('/Package', 'index')->name('admin.package')->middleware('checkPermission:adminmodule,package,show');
+                Route::get('/AddNewPackage', 'create')->name('admin.addpackage')->middleware('checkPermission:adminmodule,package,add');
+                Route::get('/EditPackage/{id}', 'edit')->name('admin.editpackage')->middleware('checkPermission:adminmodule,package,edit');
+            });
+
+            $SubscriptionController = getadminversion('SubscriptionController');
+            Route::controller($SubscriptionController)->group(function () {
+                Route::get('/Subscription', 'index')->name('admin.subscription')->middleware('checkPermission:adminmodule,subscription,show');
+                Route::get('/AddNewSubscription', 'create')->name('admin.addsubscription')->middleware('checkPermission:adminmodule,subscription,add');
+                Route::get('/EditSubscription/{id}', 'edit')->name('admin.editsubscription')->middleware('checkPermission:adminmodule,subscription,edit');
+            });
+
+            $SubscriptionPaymentController = getadminversion('SubscriptionPaymentController');
+            Route::controller($SubscriptionPaymentController)->group(function () {
+                Route::get('/SubscriptionPayments', 'index')->name('admin.subscriptionpayments')->middleware('checkPermission:adminmodule,subscription,view');
+            });
+
+            //  admin routes end------
+
+            // customer route 
+            $CustomerController = getadminversion('CustomerController');
+            Route::controller($CustomerController)->group(function () {
+                Route::get('/invoice/Customer', 'index')->name('admin.invoicecustomer')->middleware('checkPermission:invoicemodule,customer,show');
+                Route::get('/invoice/AddNewCustomer', 'create')->name('admin.addinvoicecustomer')->middleware('checkPermission:invoicemodule,customer,add');
+                Route::get('/invoice/EditCustomer/{id}', 'edit')->name('admin.editinvoicecustomer')->middleware('checkPermission:invoicemodule,customer,edit');
+
+                Route::get('/quotation/Customer', 'index')->name('admin.quotationcustomer')->middleware('checkPermission:quotationmodule,quotationcustomer,show');
+                Route::get('/quotation/AddNewCustomer', 'create')->name('admin.addquotationcustomer')->middleware('checkPermission:quotationmodule,quotationcustomer,add');
+                Route::get('/quotation/EditCustomer/{id}', 'edit')->name('admin.editquotationcustomer')->middleware('checkPermission:quotationmodule,quotationcustomer,edit');
+            });
+
+            // invoice commission party route 
+            $InvoiceCommissionPartyController = getadminversion('InvoiceCommissionPartyController');
+            Route::controller($InvoiceCommissionPartyController)->group(function () {
+                Route::get('/invoice/CommissionParty', 'index')->name('admin.invoicecommissionparty')->middleware('checkPermission:invoicemodule,invoicecommissionparty,show');
+                Route::get('/invoice/AddNewCommissionParty', 'create')->name('admin.addinvoicecommissionparty')->middleware('checkPermission:invoicemodule,invoicecommissionparty,add');
+                Route::get('/invoice/EditCommissionParty/{id}', 'edit')->name('admin.editinvoicecommissionparty')->middleware('checkPermission:invoicemodule,invoicecommissionparty,edit');
+            });
+
+            // quotation route
+            $QuotationController = getadminversion('QuotationController');
+            Route::controller($QuotationController)->group(function () {
+                Route::get('quotation', 'index')->name('admin.quotation')->middleware('checkPermission:quotationmodule,quotation,show');
+                Route::get('quotation/managecolumn', 'managecolumn')->name('admin.quotationmanagecolumn')->middleware('checkPermission:quotationmodule,quotationmngcol,edit');
+                Route::get('quotation/formula', 'formula')->name('admin.quotationformula')->middleware('checkPermission:quotationmodule,quotationformula,edit');
+                Route::get('quotation/othersettings', 'othersettings')->name('admin.quotationothersettings')->middleware('checkPermission:quotationmodule,quotationsetting,view');
+                // Normal create page (GET)
+                Route::get('/AddNewQuotation', 'create')->name('admin.addquotation')
+                    ->middleware('checkPermission:quotationmodule,quotation,add');
+                // Duplicate — POST keeps ID hidden from URL, same method handles it
+                Route::post('/AddNewQuotation', 'duplicate')->name('admin.quotation.duplicate')
+                    ->middleware('checkPermission:quotationmodule,quotation,add');
+                Route::post('/AddNewInvoice', 'createInvoice')->name('admin.quotation.create-invoice')
+                    ->middleware('checkPermission:invoicemodule,invoice,add');
+                Route::get('/EditQuotation/{id}', 'edit')->name('admin.editquotation')->middleware('checkPermission:quotationmodule,quotation,edit');
+            });
+
+            // invoice commission party route 
+            $ThirdPartyCompanyController = getadminversion('ThirdPartyCompanyController');
+            Route::controller($ThirdPartyCompanyController)->group(function () {
+                Route::get('/quotation/Company', 'quotationcompanyindex')->name('admin.quotation.thirdpartycompany')->middleware('checkPermission:quotationmodule,thirdpartyquotation,show');
+                Route::get('/quotation/AddNewCompany', 'quotationcompanycreate')->name('admin.quotation.addthirdpartycompany')->middleware('checkPermission:quotationmodule,thirdpartyquotation,add');
+                Route::get('/quotation/EditCompany/{id}', 'quotationcompanyedit')->name('admin.quotation.editthirdpartycompany')->middleware('checkPermission:quotationmodule,thirdpartyquotation,edit');
+                Route::get('/invoice/Company', 'invoicecompanyindex')->name('admin.invoice.thirdpartycompany')->middleware('checkPermission:invoicemodule,thirdpartyinvoice,show');
+                Route::get('/invoice/AddNewCompany', 'invoicecompanycreate')->name('admin.invoice.addthirdpartycompany')->middleware('checkPermission:invoicemodule,thirdpartyinvoice,add');
+                Route::get('/invoice/EditCompany/{id}', 'invoicompanyedit')->name('admin.invoice.editthirdpartycompany')->middleware('checkPermission:invoicemodule,thirdpartyinvoice,edit');
+            });
+
+            // invoice route
+            $InvoiceController = getadminversion('InvoiceController');
+            Route::controller($InvoiceController)->group(function () {
+                Route::get('/invoiceview/{id}', 'invoiceview')->name('admin.invoiceview')->middleware('checkPermission:invoicemodule,invoice,show');
+                Route::get('/invoice', 'index')->name('admin.invoice')->middleware('checkPermission:invoicemodule,invoice,show');
+                Route::get('/invoice/managecolumn', 'managecolumn')->name('admin.invoicemanagecolumn')->middleware('checkPermission:invoicemodule,mngcol,edit');
+                Route::get('/invoice/formula', 'formula')->name('admin.invoiceformula')->middleware('checkPermission:invoicemodule,formula,edit');
+                Route::get('/invoice/othersettings', 'othersettings')->name('admin.invoiceothersettings')->middleware('checkPermission:invoicemodule,invoicesetting,view');
+                Route::get('/AddNewInvoice', 'create')->name('admin.addinvoice')->middleware('checkPermission:invoicemodule,invoice,add');
+                Route::get('/EditInvoice/{id}', 'edit')->name('admin.editinvoice')->middleware('checkPermission:invoicemodule,invoice,edit');
+
+                Route::get('/tdsregister', 'tdsregister')->name('admin.tdsregister')->middleware('checkPermission:invoicemodule,tdsregister,show');
+            });
+
+            // bank route 
+            $BankDetailsController = getadminversion('BankDetailsController');
+            Route::controller($BankDetailsController)->group(function () {
+                Route::get('/Bank', 'index')->name('admin.bank')->middleware('checkPermission:invoicemodule,bank,show');
+                Route::get('/AddNewBank', 'create')->name('admin.addbank')->middleware('checkPermission:invoicemodule,bank,add');
+                Route::get('/EditBank/{id}', 'edit')->name('admin.editbank')->middleware('checkPermission:invoicemodule,bank,edit');
+            });
+
+            // report route 
+            $ReportController = getadminversion('ReportController');
+            Route::controller($ReportController)->group(function () {
+                Route::get('/report', 'index')->name('admin.report');
+            });
+            // invoice module routes end -----
+
+            // inventory module routes start 
+            // product category route 
+            $ProductCategoryController = getadminversion('ProductCategoryController');
+            Route::controller($ProductCategoryController)->group(function () {
+                Route::get('/Productcategory', 'index')->name('admin.productcategory')->middleware('checkPermission:inventorymodule,productcategory,show');
+                Route::get('/AddNewProductcategory', 'create')->name('admin.addproductcategory')->middleware('checkPermission:inventorymodule,productcategory,add');
+                Route::get('/EditProductcategory/{id}', 'edit')->name('admin.editproductcategory')->middleware('checkPermission:inventorymodule,productcategory,edit');
+            });
+
+            // product route 
+            $ProductController = getadminversion('ProductController');
+            Route::controller($ProductController)->group(function () {
+                Route::get('/Product', 'index')->name('admin.product')->middleware('checkPermission:inventorymodule,product,show');
+                Route::get('/ProductColumnMapping', 'productcolumnmapping')->name('admin.productcolumnmapping')->middleware('checkPermission:inventorymodule,productcolumnmapping,add');
+                Route::get('/AddNewProduct', 'create')->name('admin.addproduct')->middleware('checkPermission:inventorymodule,product,add');
+                Route::get('/EditProduct/{id}', 'edit')->name('admin.editproduct')->middleware('checkPermission:inventorymodule,product,edit');
+            });
+            // product category route 
+            $InventoryController = getadminversion('InventoryController');
+            Route::controller($InventoryController)->group(function () {
+                Route::get('/Inventory', 'index')->name('admin.inventory')->middleware('checkPermission:inventorymodule,inventory,show');
+            });
+
+            // suppliers route 
+            $SupplierController = getadminversion('SupplierController');
+            Route::controller($SupplierController)->group(function () {
+                Route::get('/Suppliers', 'index')->name('admin.supplier')->middleware('checkPermission:inventorymodule,supplier,show');
+                Route::get('/AddNewSuppliers', 'create')->name('admin.addsupplier')->middleware('checkPermission:inventorymodule,supplier,add');
+                Route::get('/EditSuppliers/{id}', 'edit')->name('admin.editsupplier')->middleware('checkPermission:inventorymodule,supplier,edit');
+            });
+
+            // purchase route
+            $PurchaseController = getadminversion('PurchaseController');
+            Route::controller($PurchaseController)->group(function () {
+                Route::get('/Purchase', 'index')->name('admin.purchase')->middleware('checkPermission:inventorymodule,purchase,show');
+                Route::get('/AddNewPurchase', 'create')->name('admin.addpurchase')->middleware('checkPermission:inventorymodule,purchase,add');
+                Route::get('/ViewPurchase/{id}', 'show')->name('admin.viewpurchase')->middleware('checkPermission:inventorymodule,purchase,view');
+                Route::get('/EditPurchase/{id}', 'edit')->name('admin.editpurchase')->middleware('checkPermission:inventorymodule,purchase,edit');
+            });
+            // inventory module routes end----- 
+
+            // account module routes start 
+            // account module routes end-----
+
+            // lead module routes start 
+            // lead route 
+            $TblLeadController = getadminversion('TblLeadController');
+            Route::controller($TblLeadController)->group(function () {
+                Route::get('/Lead', 'index')->name('admin.lead')->middleware('checkPermission:leadmodule,lead,show');
+                Route::get('/Lead/Settings', 'leadSettings')->name('admin.leadsettings')->middleware('checkPermission:leadmodule,leadsettings,show');
+                Route::get('/UpcomingFollowUp', 'upcomingfollowup')->name('admin.upcomingfollowup')->middleware('checkPermission:leadmodule,upcomingfollowup,show');
+                Route::get('/Lead/Analysis', 'analysis')->name('admin.analysis')->middleware('checkPermission:leadmodule,analysis,show');
+                Route::get('/Lead/OwnerPerformance', 'leadownerperformance')->name('admin.leadownerperformance')->middleware('checkPermission:leadmodule,leadownerperformance,show');
+                Route::get('/Lead/RecentActivity', 'recentactivity')->name('admin.recentactivity')->middleware('checkPermission:leadmodule,recentactivity,show');
+                Route::get('/Lead/Calendar', 'calendar')->name('admin.calendar')->middleware('checkPermission:leadmodule,calendar,show');
+                Route::get('/AddNewLead', 'create')->name('admin.addlead')->middleware('checkPermission:leadmodule,lead,add');
+                Route::get('/EditLead/{id}', 'edit')->name('admin.editlead')->middleware('checkPermission:leadmodule,lead,edit');
+                Route::get('/Lead/Api', 'leadapi')->name('admin.leadapi')->middleware('checkPermission:leadmodule,leadapi,show');
+                Route::get('/Lead/ImportFromExcel', 'importfromexcel')->name('admin.importfromexcel')->middleware('checkPermission:leadmodule,import,add');
+                Route::get('/lead/ImportFromExcel/template', 'downloadLeadTemplate')->name('lead.importtemplatedownload');
+                Route::get('/lead/ExportHistory', 'exporthistory')->name('admin.exportleadhistory')->middleware('checkPermission:leadmodule,export,show');
+            });
+            // lead module routes end----- 
+
+            // customer support module routes start 
+            // customer support route 
+            $CustomerSupportController = getadminversion('CustomerSupportController');
+            Route::controller($CustomerSupportController)->group(function () {
+                Route::get('/customersupport', 'index')->name('admin.customersupport')->middleware('checkPermission:customersupportmodule,customersupport,show');
+                Route::get('/AddNewcustomersupport', 'create')->name('admin.addcustomersupport')->middleware('checkPermission:customersupportmodule,customersupport,add');
+                Route::get('/Editcustomersupport/{id}', 'edit')->name('admin.editcustomersupport')->middleware('checkPermission:customersupportmodule,customersupport,edit');
+            });
+            // customer support module routes end ----- 
+
+            // reminder module routes start 
+            // reminder customer route 
+            $ReminderCustomerController = getadminversion('ReminderCustomerController');
+            Route::controller($ReminderCustomerController)->group(function () {
+                Route::get('/ReminderCustomer', 'index')->name('admin.remindercustomer')->middleware('checkPermission:remindermodule,remindercustomer,show');
+                Route::get('/AddNewReminderCustomer', 'create')->name('admin.addremindercustomer')->middleware('checkPermission:remindermodule,remindercustomer,add');
+                Route::get('/EditReminderCustomer/{id}', 'edit')->name('admin.editremindercustomer')->middleware('checkPermission:remindermodule,remindercustomer,edit');
+            });
+            // reminder customer route end 
+
+            // reminder route 
+            $ReminderController = getadminversion('ReminderController');
+            Route::controller($ReminderController)->group(function () {
+                Route::get('/Reminder', 'index')->name('admin.reminder')->middleware('checkPermission:remindermodule,reminder,show');
+                Route::get('/AddNewReminder/{id?}', 'create')->name('admin.addreminder')->middleware('checkPermission:remindermodule,reminder,add');
+                Route::get('/EditReminder/{id}', 'edit')->name('admin.editreminder')->middleware('checkPermission:remindermodule,reminder,edit');
+            });
+
+            // technical support route 
+            $TechSupportController = getadminversion('TechSupportController');
+            Route::controller($TechSupportController)->group(function () {
+                Route::get('/Techsupport', 'index')->name('admin.techsupport')->middleware('checkPermission:adminmodule,techsupport,show');
+                Route::get('/AddNewTechsupport', 'create')->name('admin.addtechsupport')->middleware('checkPermission:adminmodule,techsupport,add');
+                Route::get('/EditTechsupport/{id}', 'edit')->name('admin.edittechsupport')->middleware('checkPermission:adminmodule,techsupport,edit');
+            });
+            // blog module routes 
+
+            // blog table route  
+            $BlogController = getadminversion('BlogController');
+            Route::controller($BlogController)->group(function () {
+                Route::get('/Blog', 'index')->name('admin.blog')->middleware('checkPermission:blogmodule,blog,show');
+                Route::get('/Blog/Settings', 'blogsettings')->name('admin.blogsettings')->middleware('checkPermission:blogmodule,blogsettings,show');
+                Route::get('/AddNewBlog', 'create')->name('admin.addblog')->middleware('checkPermission:blogmodule,blog,add');
+                Route::get('/BlogTag', 'blogtag')->name('admin.blogtag')->middleware('checkPermission:blogmodule,blog,add');
+                Route::get('/BlogCategory', 'blogcategory')->name('admin.blogcategory')->middleware('checkPermission:blogmodule,blog,add');
+                Route::get('/EditBlog/{id}', 'edit')->name('admin.editblog')->middleware('checkPermission:blogmodule,blog,edit');
+                Route::get('/blog/Api', 'blogapi')->name('admin.blogapi')->middleware('checkPermission:blogmodule,blogapi,show');
+            });
+
+            // hr module route start
+            $HrController = getadminversion('HrController');
+            Route::controller($HrController)->group(function () {
+                Route::get('/employee', 'index')->name('admin.employee')->middleware('checkPermission:hrmodule,employees,show');
+                Route::get('/AddNewemployee', 'create')->name('admin.addemployee.form')->middleware('checkPermission:hrmodule,employees,add');
+                Route::get('/Editemployee/{id}', 'edit')->name('admin.editemployee')->middleware('checkPermission:hrmodule,employees,edit');
+                Route::get('/holidays', 'holidays')->name('admin.holidays')->middleware('checkPermission:hrmodule,companiesholidays,show');
+                Route::get('/calendar', 'calendar')->name('admin.calendar')->middleware('checkPermission:hrmodule,companiesholidays,show');
+                Route::get('/letterformate', 'letter')->name('admin.letter');
+                Route::get('/letter/edit/{id}', 'editletter')->name('admin.editletter');
+                Route::get('/lettervariablesetting', 'letter_variable_setting')->name('admin.letter_variable_setting')->middleware('checkPermission:hrmodule,letter_variable_setting,show');
+                Route::get('/AddNewlettervariablesetting', 'cerate_letter_variable_setting')->name('admin.letter_variable_settingform')->middleware('checkPermission:hrmodule,letter_variable_setting,add');
+                Route::get('/Editlettervariablesetting/{id}', 'edit_letter_variable_setting')->name('admin.letter_variable_settingupdateform')->middleware('checkPermission:hrmodule,letter_variable_setting,edit');
+                Route::get('/generateletter', 'generateletter')->name('admin.generateletter')->middleware('checkPermission:hrmodule,generate_letter,show');
+                Route::get('/AddNewgenerateletter', 'cerate_generateletter')->name('admin.generateletterform')->middleware('checkPermission:hrmodule,generate_letter,add');
+                Route::get('/Editgenerateletter/{id}', 'edit_generateletter')->name('admin.generateletterupdateform')->middleware('checkPermission:hrmodule,generate_letter,edit');
+                Route::post('generateletter-session',  'generateletter_session')->name('admin.generateletter_session');
+                Route::get('/letterfomateview/{id}', 'letterfomateview')->name('admin.letterfomateview')->middleware('checkPermission:hrmodule,generate_letter,show');
+                Route::post('/letter-preview', 'preview')->name('admin.letter.preview');
+            });
+            // hr module route end
+
+            // tea module route start
+            $companymasterController = getadminversion('companymasterController');
+            Route::controller($companymasterController)->group(function () {
+                Route::get('/companymaster', 'index')->name('admin.companymaster')->middleware('checkPermission:teamodule,teadashboard,show');
+                Route::get('/AddNewcompanymaster', 'create')->name('admin.companymasterform')->middleware('checkPermission:teamodule,teadashboard,add');
+                Route::get('/Editcompanymaster/{id}', 'edit')->name('admin.companymasterupdateform')->middleware('checkPermission:teamodule,teadashboard,edit');
+                Route::get('/garden', 'gardenindex')->name('admin.garden')->middleware('checkPermission:teamodule,teadashboard,show');
+                Route::get('/AddNewgarden', 'gardencreate')->name('admin.gardenform')->middleware('checkPermission:teamodule,teadashboard,add');
+                Route::get('/Editgarden/{id}', 'gardenedit')->name('admin.gardenupdateform')->middleware('checkPermission:teamodule,teadashboard,edit');
+            });
+            /**
+             * logistic module route start
+             */
+
+            // consignee route 
+            $ConsigneeController = getadminversion('ConsigneeController');
+            Route::controller($ConsigneeController)->group(function () {
+                Route::get('/Consignee', 'index')->name('admin.consignee')->middleware('checkPermission:logisticmodule,consignee,show');
+                Route::get('/AddNewConsignee', 'create')->name('admin.addconsignee')->middleware('checkPermission:logisticmodule,consignee,add');
+                Route::get('/EditConsignee/{id}', 'edit')->name('admin.editconsignee')->middleware('checkPermission:logisticmodule,consignee,edit');
+            });
+
+            // consignor route 
+            $ConsignorController = getadminversion('ConsignorController');
+            Route::controller($ConsignorController)->group(function () {
+                Route::get('/Consignor', 'index')->name('admin.consignor')->middleware('checkPermission:logisticmodule,consignor,show');
+                Route::get('/AddNewConsignor', 'create')->name('admin.addconsignor')->middleware('checkPermission:logisticmodule,consignor,add');
+                Route::get('/EditConsignor/{id}', 'edit')->name('admin.editconsignor')->middleware('checkPermission:logisticmodule,consignor,edit');
+            });
+
+            //consinger copy route 
+            $ConsignorCopyController = getadminversion('ConsignorCopyController');
+            Route::controller($ConsignorCopyController)->group(function () {
+                Route::get('/ConsignorCopy', 'index')->name('admin.consignorcopy')->middleware('checkPermission:logisticmodule,consignorcopy,show');
+                Route::get('/AddNewConsignorCopy', 'create')->name('admin.addconsignorcopy')->middleware('checkPermission:logisticmodule,consignorcopy,add');
+                Route::get('/EditConsignorCopy/{id}', 'edit')->name('admin.editconsignorcopy')->middleware('checkPermission:logisticmodule,consignorcopy,edit');
+                Route::get('/Logistic/othersettings', 'othersettings')->name('admin.logisticothersettings')->middleware('checkPermission:logisticmodule,logisticsettings,view');
+                Route::get('/lrcolumnmapping', 'lrcolumnmapping')->name('admin.lrcolumnmapping')->middleware('checkPermission:logisticmodule,lrcolumnmapping,add');
+            });
+
+            //transporter billing route 
+            $TransporterBillingController = getadminversion('TransporterBillingController');
+            Route::controller($TransporterBillingController)->group(function () {
+                Route::get('/TransporterBilling', 'index')->name('admin.transporterbilling')->middleware('checkPermission:logisticmodule,transporterbilling,show');
+                Route::get('/AddNewTransporterBilling', 'create')->name('admin.addtransporterbilling')->middleware('checkPermission:logisticmodule,transporterbilling,add');
+                Route::get('/EditTransporterBilling/{id}', 'edit')->name('admin.edittransporterbilling')->middleware('checkPermission:logisticmodule,transporterbilling,edit');
+            });
+
+            /**
+             * logistic module route end
+             */
+
+
+            /**
+             * developer module route start
+             */
+            $SystemMonitorController = getadminversion('SystemMonitorController');
+            Route::controller($SystemMonitorController)->group(function () {
+                Route::get('/Developer/SlowPages', 'slowpages')->name('admin.slowpages')->middleware('checkPermission:developermodule,slowpage,show');
+                Route::get('/Developer/ErrorLogs', 'errorlogs')->name('admin.errorlogs')->middleware('checkPermission:developermodule,errorlog,show');
+                Route::get('/Developer/CronJobs', 'cronjobs')->name('admin.cronjobs')->middleware('checkPermission:developermodule,cronjob,show');
+                Route::get('/Developer/TechnicalDocs', 'techdocs')->name('admin.techdocs')->middleware('checkPermission:developermodule,techdoc,show');
+                Route::get('/Developer/VersionDocs', 'versiondocs')->name('admin.versiondocs')->middleware('checkPermission:developermodule,versiondoc,show');
+                Route::get('/Developer/RecentActivityData', 'recentactivitydata')->name('admin.recentactivitydata')->middleware('checkPermission:developermodule,recentactivitydata,show');
+                Route::get('/Developer/RecentActivityData/Add', 'createrecentactivitydata')->name('admin.addrecentactivitydata')->middleware('checkPermission:developermodule,recentactivitydata,add');
+                Route::get('/Developer/RecentActivityData/Edit/{id}', 'editrecentactivitydata')->name('admin.editrecentactivitydata')->middleware('checkPermission:developermodule,recentactivitydata,edit');
+                Route::get('/Developer/ClearData', 'clearData')->name('admin.cleardata')->middleware('checkPermission:developermodule,cleardata,show');
+                Route::get('/Developer/AutomateTest', 'automatetest')->name('admin.automatetest')->middleware('checkPermission:developermodule,automatetest,show');
+                Route::get('/Developer/queues', 'queues')->name('admin.queues')->middleware('checkPermission:developermodule,queues,show');
+            });
+
+            /**
+             * developer module route end
+             */
+
+            // account module route start-------------
+            // account  route 
+            $AccountController = getadminversion('AccountController');
+            Route::controller($AccountController)->group(function () {
+                Route::get('/Expense', 'expenseindex')->name('admin.expense')->middleware('checkPermission:accountmodule,expense,show');
+                Route::get('/AddNewExpense', 'expensecreate')->name('admin.addexpense')->middleware('checkPermission:accountmodule,expense,add');
+                Route::get('/EditExpense/{id}', 'expenseedit')->name('admin.editexpense')->middleware('checkPermission:accountmodule,expense,edit');
+
+                Route::get('/category', 'categoryindex')->name('admin.category')->middleware('checkPermission:accountmodule,category,show');
+                Route::get('/AddNewCategory', 'categorycreate')->name('admin.addcategory')->middleware('checkPermission:accountmodule,category,add');
+                Route::get('/EditCategory/{id}', 'categoryedit')->name('admin.editcategory')->middleware('checkPermission:accountmodule,category,edit');
+
+                Route::get('/Income', 'incomeindex')->name('admin.income')->middleware('checkPermission:accountmodule,income,show');
+                Route::get('/AddNewIncome', 'incomecreate')->name('admin.addincome')->middleware('checkPermission:accountmodule,income,add');
+                Route::get('/EditIncome/{id}', 'incomeedit')->name('admin.editincome')->middleware('checkPermission:accountmodule,income,edit');
+
+                Route::get('/Ledger', 'ledger')->name('admin.ledger')->middleware('checkPermission:accountmodule,ledger,show');
+                Route::get('/account/othersettings', 'othersettings')->name('admin.accountothersettings')->middleware('checkPermission:accountmodule,accountformsetting,view');
+            });
+
+            //account module route end--------
+
+            // pdf routes ------------------------------------ 
+            $PdfController = getadminversion('PdfController');
+            Route::controller($PdfController)->group(function () {
+                Route::get('/download/{fileName}', 'downloadZip')->name('file.download');
+                Route::get('/generatepdf/{id}', 'generatepdf')->name('invoice.generatepdf')->middleware('checkPermission:invoicemodule,invoice,view');
+                Route::get('/generatequotationpdf/{id}', 'generatequotationpdf')->name('quotation.generatepdf')->middleware('checkPermission:quotationmodule,quotation,view');
+                Route::post('/generatepdfzip', 'generatepdfzip')->name('invoice.generatepdfzip');
+                Route::get('/generatereciept/{id}', 'generatereciept')->name('invoice.generatereciept')->middleware('checkPermission:invoicemodule,invoice,view');
+                Route::get('/generaterecieptall/{id}', 'generaterecieptall')->name('invoice.generaterecieptll')->middleware('checkPermission:invoicemodule,invoice,view');
+
+                // generate consignor copy pdf 
+                Route::get('/generateconsignorcopypdf/{id}', 'generateconsignorcopypdf')->name('consignorcopy.generatepdf')->middleware('checkPermission:logisticmodule,consignorcopy,view');
+
+                //account pdfs
+                Route::post('/ledger/generatepdf', 'generateLedgerPdfDownload')->name('ledger.generatepdf');
+                Route::get('/letter/generatepdf/{id}', 'letterdownload')->name('letter.generatepdf');
+                Route::get('/download/pdf/{fileName}', 'downloadPdf')->name('pdf.download');
+            });
+
+            Route::controller(AmazonController::class)->group(function () {
+                Route::get('/amazon/authorize', 'amazonauthorize')->name('amazon.authorize');
+            });
+        });
+    });
+});
