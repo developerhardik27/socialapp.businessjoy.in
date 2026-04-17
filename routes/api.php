@@ -882,7 +882,44 @@ Route::middleware(['checkToken'])->group(function () {
     $familyPersonController = getversion('FamilyPersonController');
     Route::controller($familyPersonController)->group(function () {
         Route::get('/family', 'familyIndex')->name('family.index');
+        Route::get('/loadrelation', 'loadrelation')->name('loadrelation.show');
+        Route::get('/loadbusinesscategory', 'loadbusinesscategory')->name('loadbusinesscategory.show');
+        Route::get('/loadbusinesssubcategory/{categoryId}', 'loadbusinesssubcategory')->name('loadbusinesssubcategory.show');
         Route::post('/addfamily', 'familyStore')->name('family.store');
+        Route::get('/family/{id}', 'familyShow')->name('family.show');
+        Route::get('/family/edit/{id}', 'familyEdit')->name('family.edit');
+        Route::put('/updatefamily/{id}', 'familyUpdate')->name('family.update');
+        Route::put('/deletefamily/{id}', 'familyDestroy')->name('family.destroy');
+    });
+
+    $BiodataController = getversion('BiodataController');
+    Route::controller($BiodataController)->group(function () {
+        Route::get('/biodata', 'index')->name('biodata.index');
+        Route::post('/addbiodata', 'store')->name('biodata.store');
+        Route::get('/biodata/{id}', 'show')->name('biodata.show');
+        Route::get('/biodata/edit/{id}', 'edit')->name('biodata.edit');
+        Route::put('/updatebiodata/{id}', 'update')->name('biodata.update');
+        Route::put('/deletebiodata/{id}', 'destroy')->name('biodata.destroy');
+        Route::get('/getFamilyPersonId', 'getFamilyPersonId')->name('biodata.getFamilyPersonId');
+        Route::get('/getFamilyPersonIdForEdit', 'getFamilyPersonIdForEdit')->name('biodata.getFamilyPersonIdForEdit');
+    });
+
+    $MemberController = getversion('MemberController');
+    Route::controller($MemberController)->group(function () {
+        Route::get('/member', 'index')->name('member.index');
+        Route::get('/member/{id}', 'show')->name('member.show');
+        Route::get('/member/edit/{id}', 'edit')->name('member.edit');
+        Route::put('/updatemember/{id}', 'update')->name('member.update');
+    });
+
+    $KarobariMemberController = getversion('KarobariMemberController');
+    Route::controller($KarobariMemberController)->group(function () {
+        Route::get('/karobarimember', 'index')->name('karobarimember.index');
+        Route::post('/addkarobarimember', 'store')->name('karobarimember.store');
+        Route::get('/loadmemberforkarobari', 'loadmemberforkarobari')->name('karobarimember.loadmemberforkarobari');
+        // Route::get('/karobarimember/{id}', 'show')->name('karobarimember.show');
+        // Route::get('/karobarimember/edit/{id}', 'edit')->name('karobarimember.edit');
+        // Route::put('/updatekarobarimember/{id}', 'update')->name('karobarimember.update');
     });
 
     $businessSubCategoryController = getversion('BusinessSubCategoryController');
@@ -893,6 +930,15 @@ Route::middleware(['checkToken'])->group(function () {
         Route::get('/businesssubcategory/edit/{id}', 'edit')->name('businesssubcategory.edit');
         Route::put('/updatebusinesssubcategory/{id}', 'update')->name('businesssubcategory.update');
         Route::put('/deletebusinesssubcategory/{id}', 'destory')->name('businesssubcategory.destroy');
+    });
+    $donestiontypeController = getversion('DonestiontypeController');
+    Route::controller($donestiontypeController)->group(function () {
+        Route::get('/donestiontype', 'index')->name('donestiontype.index');
+        Route::post('/adddonestiontype', 'store')->name('donestiontype.store');
+        Route::get('/donestiontype/{id}', 'show')->name('donestiontype.show');
+        Route::get('/donestiontype/edit/{id}', 'edit')->name('donestiontype.edit');
+        Route::put('/updatedonestiontype/{id}', 'update')->name('donestiontype.update');
+        Route::put('/deletedonestiontype/{id}', 'destory')->name('donestiontype.destroy');
     });
 });
 
