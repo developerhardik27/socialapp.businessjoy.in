@@ -940,6 +940,66 @@ Route::middleware(['checkToken'])->group(function () {
         Route::put('/updatedonestiontype/{id}', 'update')->name('donestiontype.update');
         Route::put('/deletedonestiontype/{id}', 'destory')->name('donestiontype.destroy');
     });
+
+    $donorController = getversion('DonorController');
+    Route::controller($donorController)->group(function () {
+        Route::get('/donationTypes', 'donationTypes')->name('donationTypes');
+        Route::get('/persons', 'persons')->name('persons');
+        Route::get('/donor', 'index')->name('donor.index');
+        Route::post('/adddonor', 'store')->name('donor.store');
+        Route::get('/donor/{id}', 'show')->name('donor.show');
+        Route::get('/donor/edit/{id}', 'edit')->name('donor.edit');
+        Route::put('/updatedonor/{id}', 'update')->name('donor.update');
+        Route::put('/deletedonor/{id}', 'destory')->name('donor.destroy');
+    });
+
+    $postController = getversion('PostController');
+    Route::controller($postController)->group(function () {
+        Route::get('/post', 'index')->name('post.index');
+        Route::post('/addpost', 'store')->name('post.store');
+        Route::get('/post/{id}', 'show')->name('post.show');
+        Route::get('/post/edit/{id}', 'edit')->name('post.edit');
+        Route::put('/updatepost/{id}', 'update')->name('post.update');
+        Route::put('/deletepost/{id}', 'destory')->name('post.destroy');
+        Route::get('/postComments/{id}', 'postComments')->name('post.postComments');
+        Route::post('/postComment', 'postComment')->name('post.postComment');
+        Route::get('/editpostComment/{id}', 'editPostComment')->name('post.editPostComment');
+        Route::put('/updatepostComment/{id}', 'updatePostComment')->name('post.updatePostComment');
+        Route::put('/deletepostComment/{id}', 'deletePostComment')->name('post.deletePostComment');
+        Route::post('/postlike', 'postlike')->name('post.postlike');
+    });
+
+    $jobController = getversion('JobController');
+    Route::controller($jobController)->group(function () {
+        Route::get('/job', 'index')->name('job.index');
+        Route::post('/addjob', 'store')->name('job.store');
+        Route::get('/job/{id}', 'show')->name('job.show');
+        Route::get('/job/edit/{id}', 'edit')->name('job.edit');
+        Route::put('/updatejob/{id}', 'update')->name('job.update');
+        Route::put('/deletejob/{id}', 'destory')->name('job.destroy');
+        Route::get('/jobComments/{id}', 'jobComments')->name('job.jobComments');
+        Route::post('/jobComment', 'jobComment')->name('job.jobComment');
+        Route::get('/editjobComment/{id}', 'editJobComment')->name('job.editJobComment');
+        Route::put('/updatejobComment/{id}', 'updateJobComment')->name('job.updateJobComment');
+        Route::put('/deletejobComment/{id}', 'deleteJobComment')->name('job.deleteJobComment');
+        Route::post('/joblike', 'joblike')->name('job.joblike');
+    });
+
+    $eventController = getversion('EventController');
+    Route::controller($eventController)->group(function () {
+        Route::get('/event', 'index')->name('event.index');
+        Route::post('/addevent', 'store')->name('event.store');
+        Route::get('/event/{id}', 'show')->name('event.show');
+        Route::get('/event/edit/{id}', 'edit')->name('event.edit');
+        Route::put('/updateevent/{id}', 'update')->name('event.update');
+        Route::put('/deleteevent/{id}', 'destory')->name('event.destroy');
+        Route::post('/eventComment', 'eventComment')->name('event.eventComment');
+        Route::get('/editeventComment/{id}', 'editEventComment')->name('event.editEventComment');
+        Route::put('/updateeventComment/{id}', 'updateEventComment')->name('event.updateEventComment');
+        Route::put('/deleteeventComment/{id}', 'deleteEventComment')->name('event.deleteEventComment');
+        Route::get('/eventComments/{id}', 'eventComments')->name('event.eventComments');
+        Route::post('/eventlike', 'eventlike')->name('event.eventlike');
+    });
 });
 
 //country route

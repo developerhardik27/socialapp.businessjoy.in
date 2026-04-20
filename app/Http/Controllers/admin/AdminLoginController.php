@@ -753,6 +753,7 @@ class AdminLoginController extends Controller
                     'country_id' => $admin->country_id,
                     'state_id' => $admin->state_id,
                     'city_id' => $admin->city_id,
+                    'family_person_id' => $admin->family_person_id,
                 ],
                 'company_details' => [
                     'gst_no' => $company_details->gst_no,

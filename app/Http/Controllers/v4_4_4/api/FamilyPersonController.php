@@ -5,6 +5,7 @@ use App\Models\v4_4_4\Family;
 use App\Models\v4_4_4\FamilyPerson;
 use App\Models\v4_4_4\Member;
 use App\Models\User;
+use App\Models\userrolepermission;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
@@ -16,7 +17,7 @@ use Illuminate\Support\Facades\Hash;
 
 class FamilyPersonController extends commonController
 {
-    public $userId, $companyId, $masterdbname, $rp, $familyrelationModel, $familyModel, $familyPersonModel, $businesscategoryModel, $businesssubcategoryModel, $data_formateModel;
+    public $userId, $companyId, $masterdbname, $rp, $familyrelationModel, $familyModel, $familyPersonModel, $businesscategoryModel, $businesssubcategoryModel, $data_formateModel,$user_permissionModel;
     public function __construct(Request $request)
     {
 
@@ -39,6 +40,7 @@ class FamilyPersonController extends commonController
         $this->memberModel = $this->getmodel('Member');
         $this->businesscategoryModel = $this->getmodel('BusinessCategory');
         $this->businesssubcategoryModel = $this->getmodel('BusinessSubCategory');
+        $this->user_permissionModel = $this->getmodel('user_permission');
        
     }
     // family index with all family persons and user details
@@ -216,7 +218,14 @@ class FamilyPersonController extends commonController
                             'family_person_id' => $familyPersonstore->id,
                             'created_by' => $this->userId
                         ];
-                    $users = User::create($userdata);
+                        $rp = userrolepermission::where('id', 2)->first();
+                        $user_rp = $rp->role_permissions;
+                        $users = User::create($userdata);
+                        $userrp = $this->user_permissionModel::create([
+                            'user_id' => $users->id,
+                            'rp' => $user_rp,
+                            'created_by' => $this->userId
+                        ]);
                     }
                     else{
                     $userdata = [
@@ -236,7 +245,14 @@ class FamilyPersonController extends commonController
                             'family_person_id' => $familyPersonstore->id,
                             'created_by' => $this->userId
                         ];
+                        $rp = userrolepermission::where('id', 1)->first();
                         $users = User::create($userdata);
+                        $user_rp = $rp->role_permissions;
+                        $userrp = $this->user_permissionModel::create([
+                            'user_id' => $users->id,
+                            'rp' => $user_rp,
+                            'created_by' => $this->userId
+                        ]);
                     }
                 }
 
@@ -513,19 +529,32 @@ class FamilyPersonController extends commonController
                 $familyPersonstore->update($personData);
 
                 // Update linked User record
-                User::where('family_person_id', $familyPersonstore->id)->update([
-                    'firstname'        => $familyPersonstore->first_name,
-                    'lastname'         => $familyPersonstore->last_name,
-                    'email'            => $familyPersonstore->email,
-                    'contact_no'       => $familyPersonstore->mobile,
-                    'country_id'       => $familyPersonstore->address_country_id,
-                    'state_id'         => $familyPersonstore->address_state_id,
-                    'city_id'          => $familyPersonstore->address_city_id,
-                    'pincode'          => $familyPersonstore->address_pincode,
-                    'role_permissions' => $familyPersonstore->main_family_member == 1 ? 2 : 1,
-                    'updated_by'       => $this->userId,
-                ]);
-
+                $user = User::where('family_person_id', $familyPersonstore->id)->first();
+                if ($user) {
+                    $user->update([
+                        'firstname'        => $familyPersonstore->first_name,
+                        'lastname'         => $familyPersonstore->last_name,
+                        'email'            => $familyPersonstore->email,
+                        'contact_no'       => $familyPersonstore->mobile,
+                        'country_id'       => $familyPersonstore->address_country_id,
+                        'state_id'         => $familyPersonstore->address_state_id,
+                        'city_id'          => $familyPersonstore->address_city_id,
+                        'pincode'          => $familyPersonstore->address_pincode,
+                        'role_permissions' => $familyPersonstore->main_family_member == 1 ? 2 : 1,
+                        'updated_by'       => $this->userId,
+                    ]);
+                    
+                    $rp = userrolepermission::where('id', $user->role_permissions)->first();
+                    if ($rp) {
+                        $user_rp = $rp->role_permissions;
+                        $this->user_permissionModel::updateOrCreate([
+                            'user_id' => $user->id,
+                        ], [
+                            'rp' => $user_rp,
+                            'created_by' => $this->userId
+                        ]);
+                    }
+                }
                 // ★ Member record: update or create, restore if soft-deleted
                 $isMain         = $familyPersonstore->main_family_member == 1;
                 $existingMember = $this->memberModel::where('family_person_id', $familyPersonstore->id)->first();
@@ -535,7 +564,7 @@ class FamilyPersonController extends commonController
                     'family_person_id'   => $familyPersonstore->id,
                     'lifetime_member_no' => $familyPerson['lifetime_member_no'] ?? null,
                     'receipt_number'     => $familyPerson['receipt_number'] ?? null,
-                    'status'             => ($familyPerson['lifetime_member_no'] && $familyPerson['receipt_number']) ? 1 : 0,
+                    'status'             => (!empty($familyPerson['lifetime_member_no']) && !empty($familyPerson['receipt_number'])) ? 1 : 0,
                     'is_deleted'         => $isMain ? 0 : 1,  // restore if was deleted
                     'updated_by'         => $this->userId,
                 ];
@@ -561,13 +590,14 @@ class FamilyPersonController extends commonController
                         'family_person_id'   => $familyPersonstore->id,
                         'lifetime_member_no' => $familyPerson['lifetime_member_no'] ?? null,
                         'receipt_number'     => $familyPerson['receipt_number'] ?? null,
+                        'status'             => (!empty($familyPerson['lifetime_member_no']) && !empty($familyPerson['receipt_number'])) ? 1 : 0,
                         'is_deleted'         => 0,
                         'created_by'         => $this->userId,
                     ]);
                 }
 
                 // Create User
-                User::create([
+                $user = User::create([
                     'firstname'        => $familyPersonstore->first_name,
                     'lastname'         => $familyPersonstore->last_name,
                     'role'             => 3,
@@ -583,6 +613,14 @@ class FamilyPersonController extends commonController
                     'company_id'       => $this->companyId,
                     'family_person_id' => $familyPersonstore->id,
                     'created_by'       => $this->userId,
+                ]);
+                $rp = userrolepermission::where('id', $user->role_permissions)->first();
+                $user_rp = $rp->role_permissions;
+                $userrp = $this->user_permissionModel::updateOrCreate([
+                    'user_id' => $user->id,
+                ], [
+                    'rp' => $user_rp,
+                    'created_by' => $this->userId
                 ]);
             }
 

@@ -140,6 +140,7 @@ class LoginController extends Controller
                     'city_id' => $user->city_id,
                     'default_module' => $user->default_module,
                     'default_page' => $user->default_page,
+                    'family_person_id' => $user->family_person_id,
                 ],
                 'company' => [
                     'id' => $company->id,
