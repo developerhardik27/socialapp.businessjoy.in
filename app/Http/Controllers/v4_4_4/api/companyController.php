@@ -362,6 +362,8 @@ class companyController extends commonController
             }
             $sedderpaths = [
                 'Database\\Seeders\\individual\\letter_variable_settingsSeeder',
+                'Database\\Seeders\\individual\\TypesTableSeeder',
+                'Database\\Seeders\\individual\\StatusTableSeeder',
             ];
 
             foreach ($sedderpaths as $seederClass) {

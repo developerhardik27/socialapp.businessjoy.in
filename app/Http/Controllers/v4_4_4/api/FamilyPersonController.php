@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Hash;
 
 class FamilyPersonController extends commonController
 {
-    public $userId, $companyId, $masterdbname, $rp, $familyrelationModel, $familyModel, $familyPersonModel, $businesscategoryModel, $businesssubcategoryModel, $data_formateModel,$user_permissionModel;
+    public $userId, $companyId, $masterdbname, $rp, $familyrelationModel, $familyModel, $familyPersonModel, $businesscategoryModel, $businesssubcategoryModel, $data_formateModel,$user_permissionModel,$karobarimemberModel;
     public function __construct(Request $request)
     {
 
@@ -41,6 +41,7 @@ class FamilyPersonController extends commonController
         $this->businesscategoryModel = $this->getmodel('BusinessCategory');
         $this->businesssubcategoryModel = $this->getmodel('BusinessSubCategory');
         $this->user_permissionModel = $this->getmodel('user_permission');
+         $this->karobarimemberModel = $this->getmodel('karobarimember');
        
     }
     // family index with all family persons and user details
@@ -471,10 +472,10 @@ class FamilyPersonController extends commonController
 
         $familyPersonIds    = [];
         $mainFamilyPersonId = null;
-
+        $karobaripersonids  = $this->karobarimemberModel::where('is_deleted', 0)->get()->pluck('familyPersonId')->toArray();
         // ── 6. Loop through each person ───────────────────────────────────────────
         foreach ($request->famliypersons as $familyPerson) {
-
+            
             // ★ Fix: integer fields use null, string fields use null too
             $personData = [
                 'family_id'                        => $family->id,
@@ -517,7 +518,7 @@ class FamilyPersonController extends commonController
 
             // ── Existing person → UPDATE ──────────────────────────────────────────
             if (!empty($familyPerson['family_person_id'])) {
-
+                $isKarobari = in_array($familyPerson['family_person_id'], $karobaripersonids);
                 $familyPersonstore = $this->familyPersonModel::where('id', $familyPerson['family_person_id'])
                     ->where('family_id', $family->id)
                     ->first();
@@ -540,7 +541,7 @@ class FamilyPersonController extends commonController
                         'state_id'         => $familyPersonstore->address_state_id,
                         'city_id'          => $familyPersonstore->address_city_id,
                         'pincode'          => $familyPersonstore->address_pincode,
-                        'role_permissions' => $familyPersonstore->main_family_member == 1 ? 2 : 1,
+                        'role_permissions' => $isKarobari ? 3 : ($familyPersonstore->main_family_member == 1 ? 2 : 1),
                         'updated_by'       => $this->userId,
                     ]);
                     

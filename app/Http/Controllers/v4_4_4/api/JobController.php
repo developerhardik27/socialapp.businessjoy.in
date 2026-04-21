@@ -63,10 +63,32 @@ class JobController extends commonController
             'family_person.full_name as family_person_name'
         );
         
-        if ($this->rp['societymodule']['job']['alldata'] != 1) {
-            $jobs = $jobs->where('jobs.created_by', $this->userId);
+        // if ($this->rp['societymodule']['job']['alldata'] != 1) {
+        //     $jobs = $jobs->where('jobs.created_by', $this->userId);
+        // }
+        $filters = [
+            'filter_type' => 'jobs.type',
+            'filter_city' => 'jobs.company_city_id',
+            'filter_state' => 'jobs.company_state_id',
+            'filter_pincode' => 'jobs.company_pincode',
+            'filter_from_date' => 'jobs.created_at',
+            'filter_to_date' => 'jobs.created_at',
+        ];
+
+        // Loop through the filters and apply them conditionally
+        foreach ($filters as $requestKey => $column) {
+            $value = $request->$requestKey;
+
+            if (!empty($value)) {
+                if ($requestKey === 'filter_from_date' || $requestKey === 'filter_to_date') {
+                    // ← FIXED: exact key match instead of strpos()
+                    $operator = $requestKey === 'filter_from_date' ? '>=' : '<=';
+                    $jobs->whereDate($column, $operator, $value);
+                } else {
+                    $jobs->where($column, $value);
+                }
+            }
         }
-        
         $jobs = $jobs->get();
         
         

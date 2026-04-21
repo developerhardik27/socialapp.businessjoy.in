@@ -1657,7 +1657,25 @@ class versionupdateController extends commonController
                                             ->update(['rp' => $updatedRpJson]);
                                     }
                                 }
-
+                                if ($company->id != 1) {
+                                    $seederPaths = [
+                                        'Database\\Seeders\\individual\\TypesTableSeeder',
+                                        'Database\\Seeders\\individual\\StatusTableSeeder',
+                                    ];
+                                    foreach ($seederPaths as $seederClass) {
+                                        try {
+                                            Artisan::call('db:seed', [
+                                                '--class' => $seederClass,
+                                                '--database' => 'dynamic_connection',
+                                                '--force'  => true,
+                                            ]);
+                                            Log::info("Seeder output for $seederClass: " . Artisan::output());
+                                        } catch (Exception $e) {
+                                            Log::error("Seeder failed for $seederClass: " . $e->getMessage());
+                                        }
+                                    }
+                                    
+                                }
                                 break;
                         }
 

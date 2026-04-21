@@ -63,10 +63,29 @@ class PostController extends commonController
             'family_person.full_name as family_person_name'
         );
         
-        if ($this->rp['societymodule']['post']['alldata'] != 1) {
-            $posts = $posts->where('posts.created_by', $this->userId);
+        // if ($this->rp['societymodule']['post']['alldata'] != 1) {
+        //     $posts = $posts->where('posts.created_by', $this->userId);
+        // }
+        $filters = [
+            'filter_text' => 'posts.text',
+            'filter_from_date' => 'posts.created_at',
+            'filter_to_date' => 'posts.created_at',
+        ];
+
+        // Loop through the filters and apply them conditionally
+        foreach ($filters as $requestKey => $column) {
+            $value = $request->$requestKey;
+
+            if (!empty($value)) {
+                if ($requestKey === 'filter_from_date' || $requestKey === 'filter_to_date') {
+                    // ← FIXED: exact key match instead of strpos()
+                    $operator = $requestKey === 'filter_from_date' ? '>=' : '<=';
+                    $posts->whereDate($column, $operator, $value);
+                } else {
+                    $posts->where($column, $value);
+                }
+            }
         }
-        
         $posts = $posts->get();
         
         

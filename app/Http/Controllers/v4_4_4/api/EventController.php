@@ -63,10 +63,33 @@ class EventController extends commonController
             'family_person.full_name as family_person_name'
         );
         
-        if ($this->rp['societymodule']['event']['alldata'] != 1) {
-            $events = $events->where('events.created_by', $this->userId);
+        // if ($this->rp['societymodule']['event']['alldata'] != 1) {
+        //     $events = $events->where('events.created_by', $this->userId);
+        // }
+        $filters = [
+            'filter_type' => 'events.event_type',
+            'filter_status' => 'events.event_status',
+            'filter_city' => 'events.city_id',
+            'filter_state' => 'events.state_id',
+            'filter_pincode' => 'events.pincode',
+            'filter_from_date' => 'events.event_date_from',
+            'filter_to_date' => 'events.event_date_to',
+        ];
+
+        // Loop through the filters and apply them conditionally
+        foreach ($filters as $requestKey => $column) {
+            $value = $request->$requestKey;
+
+            if (!empty($value)) {
+                if ($requestKey === 'filter_from_date' || $requestKey === 'filter_to_date') {
+                    // ← FIXED: exact key match instead of strpos()
+                    $operator = $requestKey === 'filter_from_date' ? '>=' : '<=';
+                    $events->whereDate($column, $operator, $value);
+                } else {
+                    $events->where($column, $value);
+                }
+            }
         }
-        
         $events = $events->get();
         
         

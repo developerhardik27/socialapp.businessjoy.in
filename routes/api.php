@@ -1000,6 +1000,56 @@ Route::middleware(['checkToken'])->group(function () {
         Route::get('/eventComments/{id}', 'eventComments')->name('event.eventComments');
         Route::post('/eventlike', 'eventlike')->name('event.eventlike');
     });
+
+    $applicationController = getversion('ApplicationController');
+    Route::controller($applicationController)->group(function () {
+        Route::get('/application', 'index')->name('application.index');
+        Route::post('/addapplication', 'store')->name('application.store');
+        Route::get('/application/{id}', 'show')->name('application.show');
+        Route::get('/editapplication/{id}', 'edit')->name('application.edit');
+        Route::put('/updateapplication/{id}', 'update')->name('application.update');
+        Route::put('/deleteapplication/{id}', 'destroy')->name('application.destroy');
+    });
+
+    $policieController = getversion('PolicieController');
+    Route::controller($policieController)->group(function () {
+        Route::get('/policy', 'index')->name('policy.index');
+        Route::post('/addpolicy', 'store')->name('policy.store');
+        Route::get('/policy/{id}', 'show')->name('policy.show');
+        Route::get('/editpolicy/{id}', 'edit')->name('policy.edit');
+        Route::put('/updatepolicy/{id}', 'update')->name('policy.update');
+        Route::put('/deletepolicy/{id}', 'destroy')->name('policy.destroy');
+    });
+
+    $KarobarimeetingController = getversion('KarobarimeetingController');
+    Route::controller($KarobarimeetingController)->group(function () {
+        Route::get('/karobarimeeting', 'index')->name('karobarimeeting.index');
+        Route::post('/addkarobarimeeting', 'store')->name('karobarimeeting.store');
+        
+        // Attendance routes - must come before {id} routes
+        Route::get('/karobarimeeting/attendance', 'attendanceIndex')->name('karobarimeeting.attendance.index');
+        Route::post('/karobarimeeting/addattendance', 'storeAttendance')->name('karobarimeeting.attendance.store');
+        Route::get('/karobarimeeting/attendance/{meetingId}', 'showAttendance')->name('karobarimeeting.attendance.show');
+        Route::get('/karobarimeeting/editattendance/{meetingId}', 'editAttendance')->name('karobarimeeting.attendance.edit');
+        Route::put('/karobarimeeting/updateAttendance/{meetingId}', 'updateAttendance')->name('karobarimeeting.attendance.update');
+        Route::put('/karobarimeeting/deleteattendance/{meetingId}', 'deleteAttendance')->name('karobarimeeting.attendance.delete');
+        
+        // Utility routes
+        Route::get('/karobarimeeting/loadkarobarimember', 'loadkarobarimember')->name('karobarimeeting.loadkarobarimember');
+        Route::get('/karobarimeeting/loadmettings', 'loadmettings')->name('karobarimeeting.loadmettings');
+        
+        // Meeting routes with {id} - must come after specific routes
+        Route::get('/karobarimeeting/{id}', 'show')->name('karobarimeeting.show');
+        Route::get('/editkarobarimeeting/{id}', 'edit')->name('karobarimeeting.edit');
+        Route::put('/updatekarobarimeeting/{id}', 'update')->name('karobarimeeting.update');
+        Route::put('/deletekarobarimeeting/{id}', 'destroy')->name('karobarimeeting.destroy');
+    });
+
+     $typeorstatusController = getversion('typeorstatusController');
+    Route::controller($typeorstatusController)->group(function () {
+        Route::get('/type','typeindex')->name('type.index');
+        Route::get('/status','statusindex')->name('status.index');
+    });
 });
 
 //country route
