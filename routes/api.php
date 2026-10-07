@@ -912,7 +912,7 @@ Route::middleware(['checkToken'])->group(function () {
         Route::put('/updatemember/{id}', 'update')->name('member.update');
     });
 
-    $KarobariMemberController = getversion('KarobariMemberController');
+    $KarobariMemberController = getversion('karobarimemberController');
     Route::controller($KarobariMemberController)->group(function () {
         Route::get('/karobarimember', 'index')->name('karobarimember.index');
         Route::post('/addkarobarimember', 'store')->name('karobarimember.store');
