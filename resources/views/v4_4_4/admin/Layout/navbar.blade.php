@@ -368,6 +368,10 @@
                                             <a class="iq-sub-card changemenu" href="#" data-value="developer">
                                                 <i class="ri-code-s-slash-line"></i> Developer</a>
                                         @endif
+                                        @if (Session::has('society') && Session::get('society') == 'yes')
+                                            <a class="iq-sub-card changemenu" href="#" data-value="society">
+                                                <i class="ri-community-line"></i> Society</a>
+                                        @endif
                                     </div>
                                 </li>
                             </ul>

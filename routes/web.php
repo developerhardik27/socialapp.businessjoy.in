@@ -478,6 +478,90 @@ Route::group(['middleware' => ['CheckSession']], function () {
 
             //account module route end--------
 
+            // society module routes start
+            $SocietyController = 'App\\Http\\Controllers\\v4_4_4\\admin\\SocietyController';
+            Route::controller($SocietyController)->group(function () {
+
+                // family relation route
+                Route::get('/society/FamilyRelation', 'familyrelation')->name('admin.societyfamilyrelation')->middleware('checkPermission:societymodule,familyrelation,show');
+                Route::get('/society/AddNewFamilyRelation', 'familyrelationcreate')->name('admin.addsocietyfamilyrelation')->middleware('checkPermission:societymodule,familyrelation,add');
+                Route::get('/society/EditFamilyRelation/{id}', 'familyrelationedit')->name('admin.editsocietyfamilyrelation')->middleware('checkPermission:societymodule,familyrelation,edit');
+
+                // business category route
+                Route::get('/society/BusinessCategory', 'businesscategory')->name('admin.societybusinesscategory')->middleware('checkPermission:societymodule,businesscategory,show');
+                Route::get('/society/AddNewBusinessCategory', 'businesscategorycreate')->name('admin.addsocietybusinesscategory')->middleware('checkPermission:societymodule,businesscategory,add');
+                Route::get('/society/EditBusinessCategory/{id}', 'businesscategoryedit')->name('admin.editsocietybusinesscategory')->middleware('checkPermission:societymodule,businesscategory,edit');
+
+                // business sub category route
+                Route::get('/society/BusinessSubcategory', 'businesssubcategory')->name('admin.societybusinesssubcategory')->middleware('checkPermission:societymodule,businessubcategory,show');
+                Route::get('/society/AddNewBusinessSubcategory', 'businesssubcategorycreate')->name('admin.addsocietybusinesssubcategory')->middleware('checkPermission:societymodule,businessubcategory,add');
+                Route::get('/society/EditBusinessSubcategory/{id}', 'businesssubcategoryedit')->name('admin.editsocietybusinesssubcategory')->middleware('checkPermission:societymodule,businessubcategory,edit');
+
+                // family members route
+                Route::get('/society/Family', 'family')->name('admin.societyfamily')->middleware('checkPermission:societymodule,familymembers,show');
+                Route::get('/society/AddNewFamily', 'familycreate')->name('admin.addsocietyfamily')->middleware('checkPermission:societymodule,familymembers,add');
+                Route::get('/society/EditFamily/{id}', 'familyedit')->name('admin.editsocietyfamily')->middleware('checkPermission:societymodule,familymembers,edit');
+
+                // member route
+                Route::get('/society/Member', 'member')->name('admin.societymember')->middleware('checkPermission:societymodule,member,show');
+                Route::get('/society/EditMember/{id}', 'memberedit')->name('admin.editsocietymember')->middleware('checkPermission:societymodule,member,edit');
+
+                // biodata route
+                Route::get('/society/Biodata', 'biodata')->name('admin.societybiodata')->middleware('checkPermission:societymodule,familymembers,show');
+                Route::get('/society/AddNewBiodata', 'biodatacreate')->name('admin.addsocietybiodata')->middleware('checkPermission:societymodule,familymembers,add');
+                Route::get('/society/EditBiodata/{id}', 'biodataedit')->name('admin.editsocietybiodata')->middleware('checkPermission:societymodule,familymembers,edit');
+
+                // karobari member route
+                Route::get('/society/KarobariMember', 'karobarimember')->name('admin.societykarobarimember')->middleware('checkPermission:societymodule,karobarimember,show');
+                Route::get('/society/ManageKarobariMember', 'karobarimembercreate')->name('admin.addsocietykarobarimember')->middleware('checkPermission:societymodule,karobarimember,add');
+
+                // karobari meeting route
+                Route::get('/society/KarobariMeeting', 'karobarimeeting')->name('admin.societykarobarimeeting')->middleware('checkPermission:societymodule,karobarimeeting,show');
+                Route::get('/society/AddNewKarobariMeeting', 'karobarimeetingcreate')->name('admin.addsocietykarobarimeeting')->middleware('checkPermission:societymodule,karobarimeeting,add');
+                Route::get('/society/EditKarobariMeeting/{id}', 'karobarimeetingedit')->name('admin.editsocietykarobarimeeting')->middleware('checkPermission:societymodule,karobarimeeting,edit');
+
+                // meeting attendance route
+                Route::get('/society/MeetingAttendance', 'attendance')->name('admin.societymeetingattendance')->middleware('checkPermission:societymodule,meetingattendance,show');
+                Route::get('/society/AddMeetingAttendance', 'attendancecreate')->name('admin.addsocietymeetingattendance')->middleware('checkPermission:societymodule,meetingattendance,add');
+                Route::get('/society/EditMeetingAttendance/{id}', 'attendanceedit')->name('admin.editsocietymeetingattendance')->middleware('checkPermission:societymodule,meetingattendance,edit');
+
+                // donation type route
+                Route::get('/society/DonationType', 'donationtype')->name('admin.societydonationtype')->middleware('checkPermission:societymodule,donationtype,show');
+                Route::get('/society/AddNewDonationType', 'donationtypecreate')->name('admin.addsocietydonationtype')->middleware('checkPermission:societymodule,donationtype,add');
+                Route::get('/society/EditDonationType/{id}', 'donationtypeedit')->name('admin.editsocietydonationtype')->middleware('checkPermission:societymodule,donationtype,edit');
+
+                // donor route
+                Route::get('/society/Donor', 'donor')->name('admin.societydonor')->middleware('checkPermission:societymodule,donation,show');
+                Route::get('/society/AddNewDonor', 'donorcreate')->name('admin.addsocietydonor')->middleware('checkPermission:societymodule,donation,add');
+                Route::get('/society/EditDonor/{id}', 'donoredit')->name('admin.editsocietydonor')->middleware('checkPermission:societymodule,donation,edit');
+
+                // post route
+                Route::get('/society/Post', 'post')->name('admin.societypost')->middleware('checkPermission:societymodule,post,show');
+                Route::get('/society/AddNewPost', 'postcreate')->name('admin.addsocietypost')->middleware('checkPermission:societymodule,post,add');
+                Route::get('/society/EditPost/{id}', 'postedit')->name('admin.editsocietypost')->middleware('checkPermission:societymodule,post,edit');
+
+                // job route
+                Route::get('/society/Job', 'job')->name('admin.societyjob')->middleware('checkPermission:societymodule,job,show');
+                Route::get('/society/AddNewJob', 'jobcreate')->name('admin.addsocietyjob')->middleware('checkPermission:societymodule,job,add');
+                Route::get('/society/EditJob/{id}', 'jobedit')->name('admin.editsocietyjob')->middleware('checkPermission:societymodule,job,edit');
+
+                // event route
+                Route::get('/society/Event', 'event')->name('admin.societyevent')->middleware('checkPermission:societymodule,event,show');
+                Route::get('/society/AddNewEvent', 'eventcreate')->name('admin.addsocietyevent')->middleware('checkPermission:societymodule,event,add');
+                Route::get('/society/EditEvent/{id}', 'eventedit')->name('admin.editsocietyevent')->middleware('checkPermission:societymodule,event,edit');
+
+                // application route
+                Route::get('/society/Application', 'application')->name('admin.societyapplication')->middleware('checkPermission:societymodule,application,show');
+                Route::get('/society/AddNewApplication', 'applicationcreate')->name('admin.addsocietyapplication')->middleware('checkPermission:societymodule,application,add');
+                Route::get('/society/EditApplication/{id}', 'applicationedit')->name('admin.editsocietyapplication')->middleware('checkPermission:societymodule,application,edit');
+
+                // policy route
+                Route::get('/society/Policy', 'policy')->name('admin.societypolicy')->middleware('checkPermission:societymodule,policy,show');
+                Route::get('/society/AddNewPolicy', 'policycreate')->name('admin.addsocietypolicy')->middleware('checkPermission:societymodule,policy,add');
+                Route::get('/society/EditPolicy/{id}', 'policyedit')->name('admin.editsocietypolicy')->middleware('checkPermission:societymodule,policy,edit');
+            });
+            // society module routes end -----
+
             // pdf routes ------------------------------------ 
             $PdfController = getadminversion('PdfController');
             Route::controller($PdfController)->group(function () {

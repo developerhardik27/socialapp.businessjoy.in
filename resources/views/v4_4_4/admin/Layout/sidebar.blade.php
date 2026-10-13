@@ -803,6 +803,133 @@
                                     </a>
                                 </li>
                             @endif
+                        @elseif (Session::has('menu') && Session::get('menu') == 'society')
+                            @if (session('user_permissions.societymodule.familyrelation.show') == '1')
+                                <li class="{{ request()->routeIs('admin.societyfamilyrelation') ? 'active' : '' }}">
+                                    <a href="{{ route('admin.societyfamilyrelation') }}" class="iq-waves-effect">
+                                        <i class="ri-links-line"></i>
+                                        <span>Family Relation</span>
+                                    </a>
+                                </li>
+                            @endif
+                            @if (session('user_permissions.societymodule.businesscategory.show') == '1')
+                                <li class="{{ request()->routeIs('admin.societybusinesscategory') ? 'active' : '' }}">
+                                    <a href="{{ route('admin.societybusinesscategory') }}" class="iq-waves-effect">
+                                        <i class="ri-briefcase-line"></i>
+                                        <span>Business Category</span>
+                                    </a>
+                                </li>
+                            @endif
+                            @if (session('user_permissions.societymodule.businessubcategory.show') == '1')
+                                <li class="{{ request()->routeIs('admin.societybusinesssubcategory') ? 'active' : '' }}">
+                                    <a href="{{ route('admin.societybusinesssubcategory') }}" class="iq-waves-effect">
+                                        <i class="ri-briefcase-4-line"></i>
+                                        <span>Business Subcategory</span>
+                                    </a>
+                                </li>
+                            @endif
+                            @if (session('user_permissions.societymodule.familymembers.show') == '1')
+                                <li class="{{ request()->routeIs('admin.societyfamily') ? 'active' : '' }}">
+                                    <a href="{{ route('admin.societyfamily') }}" class="iq-waves-effect">
+                                        <i class="ri-group-line"></i>
+                                        <span>Family Members</span>
+                                    </a>
+                                </li>
+                                <li class="{{ request()->routeIs('admin.societybiodata') ? 'active' : '' }}">
+                                    <a href="{{ route('admin.societybiodata') }}" class="iq-waves-effect">
+                                        <i class="ri-file-user-line"></i>
+                                        <span>Biodata</span>
+                                    </a>
+                                </li>
+                            @endif
+                            @if (session('user_permissions.societymodule.member.show') == '1')
+                                <li class="{{ request()->routeIs('admin.societymember') ? 'active' : '' }}">
+                                    <a href="{{ route('admin.societymember') }}" class="iq-waves-effect">
+                                        <i class="ri-user-3-line"></i>
+                                        <span>Member</span>
+                                    </a>
+                                </li>
+                            @endif
+                            @if (session('user_permissions.societymodule.karobarimember.show') == '1')
+                                <li class="{{ request()->routeIs('admin.societykarobarimember') ? 'active' : '' }}">
+                                    <a href="{{ route('admin.societykarobarimember') }}" class="iq-waves-effect">
+                                        <i class="ri-user-star-line"></i>
+                                        <span>Karobari Member</span>
+                                    </a>
+                                </li>
+                            @endif
+                            @if (session('user_permissions.societymodule.karobarimeeting.show') == '1')
+                                <li class="{{ request()->routeIs('admin.societykarobarimeeting') ? 'active' : '' }}">
+                                    <a href="{{ route('admin.societykarobarimeeting') }}" class="iq-waves-effect">
+                                        <i class="ri-calendar-event-line"></i>
+                                        <span>Karobari Meeting</span>
+                                    </a>
+                                </li>
+                            @endif
+                            @if (session('user_permissions.societymodule.meetingattendance.show') == '1')
+                                <li class="{{ request()->routeIs('admin.societymeetingattendance') ? 'active' : '' }}">
+                                    <a href="{{ route('admin.societymeetingattendance') }}" class="iq-waves-effect">
+                                        <i class="ri-checkbox-multiple-line"></i>
+                                        <span>Meeting Attendance</span>
+                                    </a>
+                                </li>
+                            @endif
+                            @if (session('user_permissions.societymodule.donationtype.show') == '1')
+                                <li class="{{ request()->routeIs('admin.societydonationtype') ? 'active' : '' }}">
+                                    <a href="{{ route('admin.societydonationtype') }}" class="iq-waves-effect">
+                                        <i class="ri-list-settings-line"></i>
+                                        <span>Donation Type</span>
+                                    </a>
+                                </li>
+                            @endif
+                            @if (session('user_permissions.societymodule.donation.show') == '1')
+                                <li class="{{ request()->routeIs('admin.societydonor') ? 'active' : '' }}">
+                                    <a href="{{ route('admin.societydonor') }}" class="iq-waves-effect">
+                                        <i class="ri-funds-line"></i>
+                                        <span>Donor</span>
+                                    </a>
+                                </li>
+                            @endif
+                            @if (session('user_permissions.societymodule.post.show') == '1')
+                                <li class="{{ request()->routeIs('admin.societypost') ? 'active' : '' }}">
+                                    <a href="{{ route('admin.societypost') }}" class="iq-waves-effect">
+                                        <i class="ri-article-line"></i>
+                                        <span>Post</span>
+                                    </a>
+                                </li>
+                            @endif
+                            @if (session('user_permissions.societymodule.job.show') == '1')
+                                <li class="{{ request()->routeIs('admin.societyjob') ? 'active' : '' }}">
+                                    <a href="{{ route('admin.societyjob') }}" class="iq-waves-effect">
+                                        <i class="ri-briefcase-2-line"></i>
+                                        <span>Job</span>
+                                    </a>
+                                </li>
+                            @endif
+                            @if (session('user_permissions.societymodule.event.show') == '1')
+                                <li class="{{ request()->routeIs('admin.societyevent') ? 'active' : '' }}">
+                                    <a href="{{ route('admin.societyevent') }}" class="iq-waves-effect">
+                                        <i class="ri-calendar-2-line"></i>
+                                        <span>Event</span>
+                                    </a>
+                                </li>
+                            @endif
+                            @if (session('user_permissions.societymodule.application.show') == '1')
+                                <li class="{{ request()->routeIs('admin.societyapplication') ? 'active' : '' }}">
+                                    <a href="{{ route('admin.societyapplication') }}" class="iq-waves-effect">
+                                        <i class="ri-file-list-3-line"></i>
+                                        <span>Application</span>
+                                    </a>
+                                </li>
+                            @endif
+                            @if (session('user_permissions.societymodule.policy.show') == '1')
+                                <li class="{{ request()->routeIs('admin.societypolicy') ? 'active' : '' }}">
+                                    <a href="{{ route('admin.societypolicy') }}" class="iq-waves-effect">
+                                        <i class="ri-file-shield-line"></i>
+                                        <span>Policy</span>
+                                    </a>
+                                </li>
+                            @endif
                         @endif
                         <li>
                             <a href="{{ route('admin.logout') }}" class="iq-waves-effect">

@@ -818,6 +818,53 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="tab-pane fade @if (session('menu') == 'society') active show @endif"
+                                id="societydashboard" role="tabpanel">
+                                <div class="container-fluid">
+                                    <div class="row">
+                                        @php
+                                            $societyLinks = [
+                                                ['key' => 'familyrelation', 'title' => 'Family Relation', 'route' => 'admin.societyfamilyrelation', 'icon' => 'ri-links-line'],
+                                                ['key' => 'businesscategory', 'title' => 'Business Category', 'route' => 'admin.societybusinesscategory', 'icon' => 'ri-briefcase-line'],
+                                                ['key' => 'businessubcategory', 'title' => 'Business Subcategory', 'route' => 'admin.societybusinesssubcategory', 'icon' => 'ri-briefcase-4-line'],
+                                                ['key' => 'familymembers', 'title' => 'Family Members', 'route' => 'admin.societyfamily', 'icon' => 'ri-group-line'],
+                                                ['key' => 'member', 'title' => 'Member', 'route' => 'admin.societymember', 'icon' => 'ri-user-3-line'],
+                                                ['key' => 'familymembers', 'title' => 'Biodata', 'route' => 'admin.societybiodata', 'icon' => 'ri-profile-line'],
+                                                ['key' => 'karobarimember', 'title' => 'Karobari Member', 'route' => 'admin.societykarobarimember', 'icon' => 'ri-user-star-line'],
+                                                ['key' => 'karobarimeeting', 'title' => 'Karobari Meeting', 'route' => 'admin.societykarobarimeeting', 'icon' => 'ri-calendar-event-line'],
+                                                ['key' => 'meetingattendance', 'title' => 'Meeting Attendance', 'route' => 'admin.societymeetingattendance', 'icon' => 'ri-checkbox-multiple-line'],
+                                                ['key' => 'donationtype', 'title' => 'Donation Type', 'route' => 'admin.societydonationtype', 'icon' => 'ri-list-settings-line'],
+                                                ['key' => 'donation', 'title' => 'Donor', 'route' => 'admin.societydonor', 'icon' => 'ri-funds-line'],
+                                                ['key' => 'post', 'title' => 'Post', 'route' => 'admin.societypost', 'icon' => 'ri-article-line'],
+                                                ['key' => 'job', 'title' => 'Job', 'route' => 'admin.societyjob', 'icon' => 'ri-briefcase-2-line'],
+                                                ['key' => 'event', 'title' => 'Event', 'route' => 'admin.societyevent', 'icon' => 'ri-calendar-2-line'],
+                                                ['key' => 'application', 'title' => 'Application', 'route' => 'admin.societyapplication', 'icon' => 'ri-file-list-3-line'],
+                                                ['key' => 'policy', 'title' => 'Policy', 'route' => 'admin.societypolicy', 'icon' => 'ri-file-shield-line'],
+                                            ];
+                                        @endphp
+                                        @foreach ($societyLinks as $societyLink)
+                                            @if (session('user_permissions.societymodule.' . $societyLink['key'] . '.show') == '1')
+                                                <div class="col-sm-6 col-md-4 col-lg-3">
+                                                    <a href="{{ route($societyLink['route']) }}">
+                                                        <div
+                                                            class="iq-card iq-card-block iq-card-stretch iq-card-height">
+                                                            <div class="iq-card-body text-center">
+                                                                <div class="rounded-circle iq-card-icon iq-bg-primary mb-2 m-auto"
+                                                                    style="width:60px;height:60px;line-height:60px;">
+                                                                    <i class="{{ $societyLink['icon'] }}"
+                                                                        style="font-size:24px;"></i>
+                                                                </div>
+                                                                <h5 class="card-title mb-0">
+                                                                    {{ $societyLink['title'] }}</h5>
+                                                            </div>
+                                                        </div>
+                                                    </a>
+                                                </div>
+                                            @endif
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
