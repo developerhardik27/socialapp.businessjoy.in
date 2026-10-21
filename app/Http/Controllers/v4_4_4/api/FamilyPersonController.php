@@ -81,191 +81,388 @@ class FamilyPersonController extends commonController
         ])->make(true);
     }
     // family store with all family persons and user details
+    // public function familyStore(Request $request)
+    // {
+    //     if ($this->rp['societymodule']['familymembers']['add'] != 1) {
+    //         return $this->successresponse(500, 'message', 'You are Unauthorized');
+    //     }
+    //     $validator = Validator::make($request->all(), [
+    //         'famliypersons' => 'required|array',
+    //         'famliypersons.*.email' => 'required|email',
+    //     ]);
+    //     if ($validator->fails()) {
+    //         return $this->successresponse(422, 'message', $validator->errors()->first());
+    //     }
+    //    $mainMembers = array_filter($request->famliypersons, function ($person) {
+    //         return isset($person['main_family_member']) && $person['main_family_member'] == 1;
+    //     });
+    //     foreach ($request->famliypersons as $index => $person) {
+    //          if(isset($person['email']) && !empty($person['email'])) {
+    //             $checkEmail = User::where('email', $person['email'])
+    //                 ->where('is_deleted', 0)
+    //                 ->first();
+    //             if ($checkEmail) {
+    //                 return $this->successresponse(422, 'message', "Email already exists for family member at index {$index}");
+    //             }
+    //         }
+    //         if (isset($person['main_family_member']) && $person['main_family_member'] == 1) {
+    //             if ($person['lifetime_member_no'] !== null && $person['lifetime_member_no'] !== ''){
+    //                 $checkLifetimeMemberNo = $this->memberModel::where('lifetime_member_no', $person['lifetime_member_no'])->where('is_deleted', 0)->first();
+    //                 if($checkLifetimeMemberNo){
+    //                     return $this->successresponse(422, 'message', "Lifetime member number already exists for main family member at index {$index}");
+    //                 }
+    //             }
+
+    //             if ($person['receipt_number'] !== null && $person['receipt_number'] !== '') {
+    //                 $checkReceiptNumber = $this->memberModel::where('receipt_number', $person['receipt_number'])->where('is_deleted', 0)->first();
+    //                 if($checkReceiptNumber){
+    //                     return $this->successresponse(422, 'message', "Receipt number already exists for main family member at index {$index}");
+    //                 }
+    //             }
+    //         }
+    //     }
+    //     if (count($mainMembers) == 0) {
+    //         return $this->successresponse(422, 'message', 'Main family member is required');
+    //     }
+
+    //     if (count($mainMembers) > 1) {
+    //         return $this->successresponse(422, 'message', 'Only one main family member is allowed');
+    //     }
+
+    //     // Get the single main member
+    //     $hasMainMember = array_values($mainMembers)[0];
+    //     if ($hasMainMember) {
+    //         $mainMenberFullname = ($hasMainMember['first_name'] ?? '') . ' ' .
+    //                       ($hasMainMember['last_name'] ?? '') . ' ' .
+    //                       ($hasMainMember['surname'] ?? '');
+    //         $familystore = [
+    //             'mainFamilyMemberFullName' => $mainMenberFullname,
+    //             'familyPersonIds' => null,
+    //             'mainFamilyPersonId' => null,
+    //             'created_by' => $this->userId,
+    //         ];
+    //         $family = $this->familyModel::create($familystore);
+    //     } else {
+    //         return $this->successresponse(422, 'message', 'Main family member is required');
+    //     }
+    //     if(!empty($request->famliypersons)){
+    //         foreach($request->famliypersons as $familyPerson){
+    //             $familyPersonStoredata = [
+    //                 'family_id' => $family->id,
+    //                 'first_name' => $familyPerson['first_name'] ?? '',
+    //                 'last_name' => $familyPerson['last_name'] ?? '',
+    //                 'surname' => $familyPerson['surname'] ?? '',
+    //                 'full_name' => ($familyPerson['first_name'] ?? '') . ' ' . ($familyPerson['last_name'] ?? '') . ' ' . ($familyPerson['surname'] ?? ''),
+    //                 'dob' => !empty($familyPerson['dob']) ? $familyPerson['dob'] : null,
+    //                 'age' => !empty($familyPerson['age']) ? $familyPerson['age'] : null,
+    //                 'email' => $familyPerson['email'] ?? '',
+    //                 'mobile' => $familyPerson['mobile'] ?? '',
+    //                 'address_house_no_building_name' => $familyPerson['address_house_no_building_name'] ?? '',
+    //                 'address_landmark' => $familyPerson['address_landmark'] ?? '',
+    //                 'address_area' => $familyPerson['address_area'] ?? '',
+    //                 'address_country_id' => !empty($familyPerson['address_country_id']) ? $familyPerson['address_country_id'] : null,
+    //                 'address_state_id' => !empty($familyPerson['address_state_id']) ? $familyPerson['address_state_id'] : null,
+    //                 'address_city_id' => !empty($familyPerson['address_city_id']) ? $familyPerson['address_city_id'] : null,
+    //                 'address_pincode' => !empty($familyPerson['address_pincode']) ? $familyPerson['address_pincode'] : null,
+    //                 'marital_status' => $familyPerson['marital_status'] ?? '',
+    //                 'gender' => $familyPerson['gender'] ?? '',
+    //                 'job_role' => $familyPerson['job_role'] ?? '',
+    //                 'company_name' => $familyPerson['company_name'] ?? '',
+    //                 'company_house_no_building_name' => $familyPerson['company_house_no_building_name'] ?? '',
+    //                 'company_landmark' => $familyPerson['company_landmark'] ?? '',
+    //                 'company_area' => $familyPerson['company_area'] ?? '',
+    //                 'company_country_id' => !empty($familyPerson['company_country_id']) ? $familyPerson['company_country_id'] : null,
+    //                 'company_state_id' => !empty($familyPerson['company_state_id']) ? $familyPerson['company_state_id'] : null,
+    //                 'company_city_id' => !empty($familyPerson['company_city_id']) ? $familyPerson['company_city_id'] : null,
+    //                 'company_pincode' => !empty($familyPerson['company_pincode']) ? $familyPerson['company_pincode'] : null,
+    //                 'business_intro' => $familyPerson['business_intro'] ?? '',
+    //                 'services' => $familyPerson['services'] ?? '',
+    //                 'seo_keywords' => $familyPerson['seo_keywords'] ?? '',
+    //                 'business_category' => !empty($familyPerson['business_category']) ? $familyPerson['business_category'] : null,
+    //                 'business_subcategory' => !empty($familyPerson['business_subcategory']) ? $familyPerson['business_subcategory'] : null,
+    //                 'main_family_member' => $familyPerson['main_family_member'] ?? 0,
+    //                 'relationship_id' => !empty($familyPerson['relationship_id']) ? $familyPerson['relationship_id'] : null,
+    //                 'shakh' => $familyPerson['shakh'] ?? '',
+    //                 'created_by' => $this->userId,
+    //             ];
+    //             $familyPersonstore = $this->familyPersonModel::create($familyPersonStoredata);
+                
+    //             $passwordtoken = Str::random(40);
+    //             if($familyPersonstore){
+    //                 $familyPersonIds[] = (string) $familyPersonstore->id;
+    //                 // Update main family table add main family person id and if this main family person then add member record
+    //                 if ($familyPersonstore->main_family_member == 1){
+    //                     $this->familyModel::where('id', $familyPersonstore->family_id)->update(['mainFamilyPersonId' => $familyPersonstore->id]);
+    //                     $member = [
+    //                         'family_id' => $familyPersonstore->family_id,
+    //                         'family_person_id' => $familyPersonstore->id,
+    //                         'lifetime_member_no' => $familyPerson['lifetime_member_no'] ?? '',
+    //                         'receipt_number' => $familyPerson['receipt_number'] ?? '',
+    //                         'status'      => ($familyPerson['lifetime_member_no'] && $familyPerson['receipt_number']) ? 1 : 0,
+    //                         'created_by' => $this->userId,
+    //                     ];
+    //                 $memberstore = $this->memberModel::create($member);
+    //                 $userdata = [
+    //                         'firstname' => $familyPersonstore->first_name,
+    //                         'lastname' => $familyPersonstore->last_name,
+    //                         'role' => 3,
+    //                         'email' => $familyPersonstore->email,
+    //                         'password' => Hash::make($familyPersonstore->email),
+    //                         'contact_no' => $familyPersonstore->mobile,
+    //                         'country_id' => $familyPersonstore->address_country_id,
+    //                         'state_id' => $familyPersonstore->address_state_id,
+    //                         'city_id' => $familyPersonstore->address_city_id,
+    //                         'pincode' => $familyPersonstore->address_pincode,
+    //                         'role_permissions' => 2,
+    //                         'pass_token' => $passwordtoken,
+    //                         'company_id' => $this->companyId,
+    //                         'family_person_id' => $familyPersonstore->id,
+    //                         'created_by' => $this->userId
+    //                     ];
+    //                     $rp = userrolepermission::where('id', 2)->first();
+    //                     $user_rp = $rp->role_permissions;
+    //                     $users = User::create($userdata);
+    //                     $userrp = $this->user_permissionModel::create([
+    //                         'user_id' => $users->id,
+    //                         'rp' => $user_rp,
+    //                         'created_by' => $this->userId
+    //                     ]);
+    //                 }
+    //                 else{
+    //                 $userdata = [
+    //                         'firstname' => $familyPersonstore->first_name,
+    //                         'lastname' => $familyPersonstore->last_name,
+    //                         'role' => 3,
+    //                         'email' => $familyPersonstore->email,
+    //                         'password' => Hash::make($familyPersonstore->email),
+    //                         'contact_no' => $familyPersonstore->mobile,
+    //                         'country_id' => $familyPersonstore->address_country_id,
+    //                         'state_id' => $familyPersonstore->address_state_id,
+    //                         'city_id' => $familyPersonstore->address_city_id,
+    //                         'pincode' => $familyPersonstore->address_pincode,
+    //                         'role_permissions' => 1,
+    //                         'pass_token' => $passwordtoken,
+    //                         'company_id' => $this->companyId,
+    //                         'family_person_id' => $familyPersonstore->id,
+    //                         'created_by' => $this->userId
+    //                     ];
+    //                     $rp = userrolepermission::where('id', 1)->first();
+    //                     $users = User::create($userdata);
+    //                     $user_rp = $rp->role_permissions;
+    //                     $userrp = $this->user_permissionModel::create([
+    //                         'user_id' => $users->id,
+    //                         'rp' => $user_rp,
+    //                         'created_by' => $this->userId
+    //                     ]);
+    //                 }
+    //             }
+
+    //         }
+    //         $this->familyModel::where('id', $family['id'])->update(['familyPersonIds' => json_encode($familyPersonIds)]);
+
+    //     }
+    //     else{
+    //         return $this->successresponse(422, 'message', 'Family persons are required');
+    //     }
+    //     return $this->successresponse(200, 'message', 'Family and family persons created successfully');
+        
+    // }
+    // Convert "", "  ", null to null. Keeps 0 and "0" as valid values.
+    private function blankToNull($value)
+    {
+        if (is_string($value)) {
+            $value = trim($value);
+        }
+        return ($value === '' || $value === null) ? null : $value;
+    }
+
     public function familyStore(Request $request)
     {
         if ($this->rp['societymodule']['familymembers']['add'] != 1) {
             return $this->successresponse(500, 'message', 'You are Unauthorized');
         }
+
+        // ── 1. Validation ────────────────────────────────────────────────
         $validator = Validator::make($request->all(), [
-            'famliypersons' => 'required|array',
-            'famliypersons.*.email' => 'required|email',
+            'famliypersons'                         => 'required|array|min:1',
+            'famliypersons.*.first_name'            => 'required|string|max:255',
+            'famliypersons.*.email'                 => 'required|email|distinct',
+            'famliypersons.*.main_family_member'    => 'required|in:0,1',
+            'famliypersons.*.relationship_id'       => 'required_if:famliypersons.*.main_family_member,0|nullable|integer',
+            'famliypersons.*.dob'                   => 'nullable|date',
+            'famliypersons.*.age'                   => 'nullable|integer|min:0|max:150',
+            'famliypersons.*.address_pincode'       => 'nullable|integer',
+            'famliypersons.*.company_pincode'       => 'nullable|integer',
+        ], [
+            'famliypersons.required'                        => 'Family persons are required',
+            'famliypersons.array'                           => 'Family persons must be an array',
+            'famliypersons.*.first_name.required'           => 'First name is required for family member :position',
+            'famliypersons.*.email.required'                => 'Email is required for family member :position',
+            'famliypersons.*.email.email'                   => 'Email is invalid for family member :position',
+            'famliypersons.*.email.distinct'                => 'Duplicate email found in the list (member :position)',
+            'famliypersons.*.main_family_member.required'   => 'Main family member flag is required for member :position',
+            'famliypersons.*.main_family_member.in'         => 'Main family member must be 0 or 1 (member :position)',
+            'famliypersons.*.relationship_id.required_if'   => 'Relationship is required for family member :position',
+            'famliypersons.*.dob.date'                      => 'Date of birth is invalid for member :position',
+            'famliypersons.*.age.integer'                   => 'Age must be a number for member :position',
+            'famliypersons.*.address_pincode.integer'       => 'Address pincode must be a number for member :position',
+            'famliypersons.*.company_pincode.integer'       => 'Company pincode must be a number for member :position',
         ]);
+
         if ($validator->fails()) {
             return $this->successresponse(422, 'message', $validator->errors()->first());
         }
-       $mainMembers = array_filter($request->famliypersons, function ($person) {
-            return isset($person['main_family_member']) && $person['main_family_member'] == 1;
-        });
-        foreach ($request->famliypersons as $index => $person) {
-             if(isset($person['email']) && !empty($person['email'])) {
-                $checkEmail = User::where('email', $person['email'])
-                    ->where('is_deleted', 0)
-                    ->first();
-                if ($checkEmail) {
-                    return $this->successresponse(422, 'message', "Email already exists for family member at index {$index}");
-                }
-            }
-            if (isset($person['main_family_member']) && $person['main_family_member'] == 1) {
-                if ($person['lifetime_member_no'] !== null && $person['lifetime_member_no'] !== ''){
-                    $checkLifetimeMemberNo = $this->memberModel::where('lifetime_member_no', $person['lifetime_member_no'])->where('is_deleted', 0)->first();
-                    if($checkLifetimeMemberNo){
-                        return $this->successresponse(422, 'message', "Lifetime member number already exists for main family member at index {$index}");
-                    }
-                }
 
-                if ($person['receipt_number'] !== null && $person['receipt_number'] !== '') {
-                    $checkReceiptNumber = $this->memberModel::where('receipt_number', $person['receipt_number'])->where('is_deleted', 0)->first();
-                    if($checkReceiptNumber){
-                        return $this->successresponse(422, 'message', "Receipt number already exists for main family member at index {$index}");
-                    }
-                }
-            }
-        }
+        // ── 2. Main member rules ─────────────────────────────────────────
+        $mainMembers = array_filter($request->famliypersons, fn($p) => ($p['main_family_member'] ?? 0) == 1);
+
         if (count($mainMembers) == 0) {
             return $this->successresponse(422, 'message', 'Main family member is required');
         }
-
         if (count($mainMembers) > 1) {
             return $this->successresponse(422, 'message', 'Only one main family member is allowed');
         }
 
-        // Get the single main member
-        $hasMainMember = array_values($mainMembers)[0];
-        if ($hasMainMember) {
-            $mainMenberFullname = ($hasMainMember['first_name'] ?? '') . ' ' .
-                          ($hasMainMember['last_name'] ?? '') . ' ' .
-                          ($hasMainMember['surname'] ?? '');
-            $familystore = [
-                'mainFamilyMemberFullName' => $mainMenberFullname,
-                'familyPersonIds' => null,
-                'mainFamilyPersonId' => null,
-                'created_by' => $this->userId,
-            ];
-            $family = $this->familyModel::create($familystore);
-        } else {
-            return $this->successresponse(422, 'message', 'Main family member is required');
+        // ── 3. Uniqueness checks ─────────────────────────────────────────
+        foreach ($request->famliypersons as $index => $person) {
+            $position = $index + 1;
+
+            if (User::where('email', $person['email'])->where('is_deleted', 0)->exists()) {
+                return $this->successresponse(422, 'message', "Email already exists for family member {$position}");
+            }
+
+            if (($person['main_family_member'] ?? 0) == 1) {
+                $lifetimeNo = $this->blankToNull($person['lifetime_member_no'] ?? null);
+                $receiptNo  = $this->blankToNull($person['receipt_number'] ?? null);
+
+                if ($lifetimeNo !== null &&
+                    $this->memberModel::where('lifetime_member_no', $lifetimeNo)->where('is_deleted', 0)->exists()) {
+                    return $this->successresponse(422, 'message', "Lifetime member number already exists for main family member");
+                }
+                if ($receiptNo !== null &&
+                    $this->memberModel::where('receipt_number', $receiptNo)->where('is_deleted', 0)->exists()) {
+                    return $this->successresponse(422, 'message', "Receipt number already exists for main family member");
+                }
+            }
         }
-        if(!empty($request->famliypersons)){
-            foreach($request->famliypersons as $familyPerson){
-                $familyPersonStoredata = [
-                    'family_id' => $family->id,
-                    'first_name' => $familyPerson['first_name'] ?? '',
-                    'last_name' => $familyPerson['last_name'] ?? '',
-                    'surname' => $familyPerson['surname'] ?? '',
-                    'full_name' => ($familyPerson['first_name'] ?? '') . ' ' . ($familyPerson['last_name'] ?? '') . ' ' . ($familyPerson['surname'] ?? ''),
-                    'dob' => $familyPerson['dob'] ?? '',
-                    'age' => $familyPerson['age'] ?? '',
-                    'email' => $familyPerson['email'] ?? '',
-                    'mobile' => $familyPerson['mobile'] ?? '',
-                    'address_house_no_building_name' => $familyPerson['address_house_no_building_name'] ?? '',
-                    'address_landmark' => $familyPerson['address_landmark'] ?? '',
-                    'address_area' => $familyPerson['address_area'] ?? '',
-                    'address_country_id' => $familyPerson['address_country_id'] ?? '',
-                    'address_state_id' => $familyPerson['address_state_id'] ?? '',
-                    'address_city_id' => $familyPerson['address_city_id'] ?? '',
-                    'address_pincode' => $familyPerson['address_pincode'] ?? '',
-                    'marital_status' => $familyPerson['marital_status'] ?? '',
-                    'gender' => $familyPerson['gender'] ?? '',
-                    'job_role' => $familyPerson['job_role'] ?? '',
-                    'company_name' => $familyPerson['company_name'] ?? '',
-                    'company_house_no_building_name' => $familyPerson['company_house_no_building_name'] ?? '',
-                    'company_landmark' => $familyPerson['company_landmark'] ?? '',
-                    'company_area' => $familyPerson['company_area'] ?? '',
-                    'company_country_id' => $familyPerson['company_country_id'] ?? '',
-                    'company_state_id' => $familyPerson['company_state_id'] ?? '',
-                    'company_city_id' => $familyPerson['company_city_id'] ?? '',
-                    'company_pincode' => $familyPerson['company_pincode'] ?? '',
-                    'business_intro' => $familyPerson['business_intro'] ?? '',
-                    'services' => $familyPerson['services'] ?? '',
-                    'seo_keywords' => $familyPerson['seo_keywords'] ?? '',
-                    'business_category' => $familyPerson['business_category'] ?? '',
-                    'business_subcategory' => $familyPerson['business_subcategory'] ?? '',
-                    'main_family_member' => $familyPerson['main_family_member'] ?? 0,
-                    'relationship_id' => $familyPerson['relationship_id'] ?? '',
-                    'shakh' => $familyPerson['shakh'] ?? '',
-                    'created_by' => $this->userId,
+
+        // ── 4. Save ──────────────────────────────────────────────────────
+        DB::connection('dynamic_connection')->beginTransaction();
+        DB::beginTransaction();
+
+        try {
+            $main = array_values($mainMembers)[0];
+            $mainFullName = trim(
+                ($main['first_name'] ?? '') . ' ' . ($main['last_name'] ?? '') . ' ' . ($main['surname'] ?? '')
+            );
+
+            $family = $this->familyModel::create([
+                'mainFamilyMemberFullName' => $mainFullName,
+                'familyPersonIds'          => null,
+                'mainFamilyPersonId'       => null,
+                'created_by'               => $this->userId,
+            ]);
+
+            $stringFields = [
+                'first_name', 'last_name', 'surname', 'email', 'mobile',
+                'address_house_no_building_name', 'address_landmark', 'address_area',
+                'marital_status', 'gender', 'job_role', 'company_name',
+                'company_house_no_building_name', 'company_landmark', 'company_area',
+                'business_intro', 'services', 'seo_keywords', 'shakh',
+            ];
+            $intFields = [
+                'dob', 'age',
+                'address_country_id', 'address_state_id', 'address_city_id', 'address_pincode',
+                'company_country_id', 'company_state_id', 'company_city_id', 'company_pincode',
+                'business_category', 'business_subcategory',
+            ];
+
+            $familyPersonIds = [];
+
+            foreach ($request->famliypersons as $familyPerson) {
+
+                $personData = [
+                    'family_id'          => $family->id,
+                    'main_family_member' => (int) ($familyPerson['main_family_member'] ?? 0),
+                    'relationship_id'    => $this->blankToNull($familyPerson['relationship_id'] ?? null) ?? 0, // NOT NULL column
+                    'created_by'         => $this->userId,
                 ];
-                $familyPersonstore = $this->familyPersonModel::create($familyPersonStoredata);
-                
-                $passwordtoken = Str::random(40);
-                if($familyPersonstore){
-                    $familyPersonIds[] = (string) $familyPersonstore->id;
-                    // Update main family table add main family person id and if this main family person then add member record
-                    if ($familyPersonstore->main_family_member == 1){
-                        $this->familyModel::where('id', $familyPersonstore->family_id)->update(['mainFamilyPersonId' => $familyPersonstore->id]);
-                        $member = [
-                            'family_id' => $familyPersonstore->family_id,
-                            'family_person_id' => $familyPersonstore->id,
-                            'lifetime_member_no' => $familyPerson['lifetime_member_no'] ?? '',
-                            'receipt_number' => $familyPerson['receipt_number'] ?? '',
-                            'status'      => ($familyPerson['lifetime_member_no'] && $familyPerson['receipt_number']) ? 1 : 0,
-                            'created_by' => $this->userId,
-                        ];
-                    $memberstore = $this->memberModel::create($member);
-                    $userdata = [
-                            'firstname' => $familyPersonstore->first_name,
-                            'lastname' => $familyPersonstore->last_name,
-                            'role' => 3,
-                            'email' => $familyPersonstore->email,
-                            'password' => Hash::make($familyPersonstore->email),
-                            'contact_no' => $familyPersonstore->mobile,
-                            'country_id' => $familyPersonstore->address_country_id,
-                            'state_id' => $familyPersonstore->address_state_id,
-                            'city_id' => $familyPersonstore->address_city_id,
-                            'pincode' => $familyPersonstore->address_pincode,
-                            'role_permissions' => 2,
-                            'pass_token' => $passwordtoken,
-                            'company_id' => $this->companyId,
-                            'family_person_id' => $familyPersonstore->id,
-                            'created_by' => $this->userId
-                        ];
-                        $rp = userrolepermission::where('id', 2)->first();
-                        $user_rp = $rp->role_permissions;
-                        $users = User::create($userdata);
-                        $userrp = $this->user_permissionModel::create([
-                            'user_id' => $users->id,
-                            'rp' => $user_rp,
-                            'created_by' => $this->userId
-                        ]);
-                    }
-                    else{
-                    $userdata = [
-                            'firstname' => $familyPersonstore->first_name,
-                            'lastname' => $familyPersonstore->last_name,
-                            'role' => 3,
-                            'email' => $familyPersonstore->email,
-                            'password' => Hash::make($familyPersonstore->email),
-                            'contact_no' => $familyPersonstore->mobile,
-                            'country_id' => $familyPersonstore->address_country_id,
-                            'state_id' => $familyPersonstore->address_state_id,
-                            'city_id' => $familyPersonstore->address_city_id,
-                            'pincode' => $familyPersonstore->address_pincode,
-                            'role_permissions' => 1,
-                            'pass_token' => $passwordtoken,
-                            'company_id' => $this->companyId,
-                            'family_person_id' => $familyPersonstore->id,
-                            'created_by' => $this->userId
-                        ];
-                        $rp = userrolepermission::where('id', 1)->first();
-                        $users = User::create($userdata);
-                        $user_rp = $rp->role_permissions;
-                        $userrp = $this->user_permissionModel::create([
-                            'user_id' => $users->id,
-                            'rp' => $user_rp,
-                            'created_by' => $this->userId
-                        ]);
-                    }
+
+                foreach (array_merge($stringFields, $intFields) as $field) {
+                    $personData[$field] = $this->blankToNull($familyPerson[$field] ?? null);
                 }
 
-            }
-            $this->familyModel::where('id', $family['id'])->update(['familyPersonIds' => json_encode($familyPersonIds)]);
+                $personData['full_name'] = trim(
+                    ($familyPerson['first_name'] ?? '') . ' ' .
+                    ($familyPerson['last_name'] ?? '') . ' ' .
+                    ($familyPerson['surname'] ?? '')
+                );
 
+                $familyPersonstore = $this->familyPersonModel::create($personData);
+                $familyPersonIds[] = (string) $familyPersonstore->id;
+
+                $isMain = $familyPersonstore->main_family_member == 1;
+
+                if ($isMain) {
+                    $lifetimeNo = $this->blankToNull($familyPerson['lifetime_member_no'] ?? null);
+                    $receiptNo  = $this->blankToNull($familyPerson['receipt_number'] ?? null);
+
+                    $this->familyModel::where('id', $family->id)
+                        ->update(['mainFamilyPersonId' => $familyPersonstore->id]);
+
+                    $this->memberModel::create([
+                        'family_id'          => $familyPersonstore->family_id,
+                        'family_person_id'   => $familyPersonstore->id,
+                        'lifetime_member_no' => $lifetimeNo,
+                        'receipt_number'     => $receiptNo,
+                        'status'             => ($lifetimeNo !== null && $receiptNo !== null) ? 1 : 0,
+                        'created_by'         => $this->userId,
+                    ]);
+                }
+
+                // Main member -> role_permissions 2, others -> 1
+                $roleId = $isMain ? 2 : 1;
+                $rp     = userrolepermission::where('id', $roleId)->first();
+
+                $user = User::create([
+                    'firstname'        => $familyPersonstore->first_name,
+                    'lastname'         => $familyPersonstore->last_name,
+                    'role'             => 3,
+                    'email'            => $familyPersonstore->email,
+                    'password'         => Hash::make($familyPersonstore->email),
+                    'contact_no'       => $familyPersonstore->mobile,
+                    'country_id'       => $familyPersonstore->address_country_id,
+                    'state_id'         => $familyPersonstore->address_state_id,
+                    'city_id'          => $familyPersonstore->address_city_id,
+                    'pincode'          => $familyPersonstore->address_pincode,
+                    'role_permissions' => $roleId,
+                    'pass_token'       => Str::random(40),
+                    'company_id'       => $this->companyId,
+                    'family_person_id' => $familyPersonstore->id,
+                    'created_by'       => $this->userId,
+                ]);
+
+                $this->user_permissionModel::create([
+                    'user_id'    => $user->id,
+                    'rp'         => $rp->role_permissions,
+                    'created_by' => $this->userId,
+                ]);
+            }
+
+            $this->familyModel::where('id', $family->id)
+                ->update(['familyPersonIds' => json_encode($familyPersonIds)]);
+
+            DB::connection('dynamic_connection')->commit();
+            DB::commit();
+
+            return $this->successresponse(200, 'message', 'Family and family persons created successfully');
+
+        } catch (\Throwable $e) {
+            DB::connection('dynamic_connection')->rollBack();
+            DB::rollBack();
+            Log::error('familyStore failed: ' . $e->getMessage());
+            return $this->successresponse(500, 'message', 'Something went wrong while saving family');
         }
-        else{
-            return $this->successresponse(422, 'message', 'Family persons are required');
-        }
-        return $this->successresponse(200, 'message', 'Family and family persons created successfully');
-        
     }
     // load business categories for family person
     public function loadbusinesscategory(){
@@ -368,25 +565,323 @@ class FamilyPersonController extends commonController
         return $this->successresponse(200, 'family', $familydata);
     }
     // family update with all family persons and user details
+    // public function familyUpdate(Request $request)
+    // {
+    //     if ($this->rp['societymodule']['familymembers']['edit'] != 1) {
+    //         return $this->successresponse(500, 'message', 'You are Unauthorized');
+    //     }
+
+    //     $validator = Validator::make($request->all(), [
+    //         'family_id'             => 'required|integer',
+    //         'famliypersons'         => 'required|array',
+    //         'famliypersons.*.email' => 'required|email',
+    //     ]);
+    //     if ($validator->fails()) {
+    //         return $this->successresponse(422, 'message', $validator->errors()->first());
+    //     }
+
+    //     // ── 1. Validate main-member rules ────────────────────────────────────────
+    //     $mainMembers = array_filter($request->famliypersons, function ($person) {
+    //         return isset($person['main_family_member']) && $person['main_family_member'] == 1;
+    //     });
+
+    //     if (count($mainMembers) == 0) {
+    //         return $this->successresponse(422, 'message', 'Main family member is required');
+    //     }
+    //     if (count($mainMembers) > 1) {
+    //         return $this->successresponse(422, 'message', 'Only one main family member is allowed');
+    //     }
+
+    //     // ── 2. Validate email, lifetime_member_no & receipt_number uniqueness ────
+    //     foreach ($request->famliypersons as $index => $person) {
+
+    //         // Email uniqueness check
+    //         if (isset($person['email']) && !empty($person['email'])) {
+    //             $checkEmail = User::where('email', $person['email'])
+    //                 ->where('is_deleted', 0)
+    //                 ->when(!empty($person['family_person_id']), function ($q) use ($person) {
+    //                     $q->where('family_person_id', '!=', $person['family_person_id']);
+    //                 })
+    //                 ->exists();
+    //             if ($checkEmail) {
+    //                 return $this->successresponse(422, 'message', "Email already exists for family member at index {$index}");
+    //             }
+    //         }
+
+    //         if (isset($person['main_family_member']) && $person['main_family_member'] == 1) {
+
+    //             if ($person['lifetime_member_no'] !== null && $person['lifetime_member_no'] !== '') {
+    //                 $checkLifetime = $this->memberModel::where('lifetime_member_no', $person['lifetime_member_no'])
+    //                     ->where('is_deleted', 0)
+    //                     ->when(!empty($person['family_person_id']), function ($q) use ($person) {
+    //                         $q->where('family_person_id', '!=', $person['family_person_id']);
+    //                     })
+    //                     ->first();
+    //                 if ($checkLifetime) {
+    //                     return $this->successresponse(422, 'message', "Lifetime member number already exists for main family member at index {$index}");
+    //                 }
+    //             }
+
+    //             if ($person['receipt_number'] !== null && $person['receipt_number'] !== '') {
+    //                 $checkReceipt = $this->memberModel::where('receipt_number', $person['receipt_number'])
+    //                     ->where('is_deleted', 0)
+    //                     ->when(!empty($person['family_person_id']), function ($q) use ($person) {
+    //                         $q->where('family_person_id', '!=', $person['family_person_id']);
+    //                     })
+    //                     ->first();
+    //                 if ($checkReceipt) {
+    //                     return $this->successresponse(422, 'message', "Receipt number already exists for main family member at index {$index}");
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     // ── 3. Load existing family ───────────────────────────────────────────────
+    //     $family = $this->familyModel::where('id', $request->family_id)->first();
+    //     if (!$family) {
+    //         return $this->successresponse(422, 'message', 'Family not found');
+    //     }
+
+    //     // ── 4. Soft-delete persons & users removed from the list ─────────────────
+    //     $incomingPersonIds = array_filter(
+    //         array_column($request->famliypersons, 'family_person_id')
+    //     );
+
+    //     $removedPersonIds = $this->familyPersonModel::where('family_id', $request->family_id)
+    //         ->whereNotIn('id', $incomingPersonIds)
+    //         ->pluck('id');
+
+    //     if ($removedPersonIds->isNotEmpty()) {
+    //         $this->familyPersonModel::whereIn('id', $removedPersonIds)
+    //             ->update(['is_deleted' => 1, 'updated_by' => $this->userId]);
+
+    //         User::whereIn('family_person_id', $removedPersonIds)
+    //             ->update(['is_deleted' => 1, 'updated_by' => $this->userId]);
+    //     }
+
+    //     // ── 5. Build main member full name ────────────────────────────────────────
+    //     $hasMainMember = array_values($mainMembers)[0];
+    //     $mainMemberFullName = trim(
+    //         ($hasMainMember['first_name'] ?? '') . ' ' .
+    //         ($hasMainMember['last_name']  ?? '') . ' ' .
+    //         ($hasMainMember['surname']    ?? '')
+    //     );
+
+    //     $familyPersonIds    = [];
+    //     $mainFamilyPersonId = null;
+    //     $karobaripersonids  = $this->karobarimemberModel::where('is_deleted', 0)->get()->pluck('familyPersonId')->toArray();
+    //     // ── 6. Loop through each person ───────────────────────────────────────────
+    //     foreach ($request->famliypersons as $familyPerson) {
+            
+    //         // ★ Fix: integer fields use null, string fields use null too
+    //         $personData = [
+    //             'family_id'                        => $family->id,
+    //             'first_name'                       => $familyPerson['first_name'] ?? null,
+    //             'last_name'                        => $familyPerson['last_name'] ?? null,
+    //             'surname'                          => $familyPerson['surname'] ?? null,
+    //             'full_name'                        => trim(($familyPerson['first_name'] ?? '') . ' ' . ($familyPerson['last_name'] ?? '') . ' ' . ($familyPerson['surname'] ?? '')),
+    //             'dob'                              => !empty($familyPerson['dob']) ? $familyPerson['dob'] : null,
+    //             'age'                              => !empty($familyPerson['age']) ? $familyPerson['age'] : null,
+    //             'email'                            => $familyPerson['email'] ?? null,
+    //             'mobile'                           => $familyPerson['mobile'] ?? null,
+    //             'address_house_no_building_name'   => $familyPerson['address_house_no_building_name'] ?? null,
+    //             'address_landmark'                 => $familyPerson['address_landmark'] ?? null,
+    //             'address_area'                     => $familyPerson['address_area'] ?? null,
+    //             'address_country_id'               => !empty($familyPerson['address_country_id']) ? $familyPerson['address_country_id'] : null,
+    //             'address_state_id'                 => !empty($familyPerson['address_state_id']) ? $familyPerson['address_state_id'] : null,
+    //             'address_city_id'                  => !empty($familyPerson['address_city_id']) ? $familyPerson['address_city_id'] : null,
+    //             'address_pincode'                  => !empty($familyPerson['address_pincode']) ? $familyPerson['address_pincode'] : null,
+    //             'marital_status'                   => $familyPerson['marital_status'] ?? null,
+    //             'gender'                           => $familyPerson['gender'] ?? null,
+    //             'job_role'                         => $familyPerson['job_role'] ?? null,
+    //             'company_name'                     => $familyPerson['company_name'] ?? null,
+    //             'company_house_no_building_name'   => $familyPerson['company_house_no_building_name'] ?? null,
+    //             'company_landmark'                 => $familyPerson['company_landmark'] ?? null,
+    //             'company_area'                     => $familyPerson['company_area'] ?? null,
+    //             'company_country_id'               => !empty($familyPerson['company_country_id']) ? $familyPerson['company_country_id'] : null,
+    //             'company_state_id'                 => !empty($familyPerson['company_state_id']) ? $familyPerson['company_state_id'] : null,
+    //             'company_city_id'                  => !empty($familyPerson['company_city_id']) ? $familyPerson['company_city_id'] : null,
+    //             'company_pincode'                  => !empty($familyPerson['company_pincode']) ? $familyPerson['company_pincode'] : null,
+    //             'business_intro'                   => $familyPerson['business_intro'] ?? null,
+    //             'services'                         => $familyPerson['services'] ?? null,
+    //             'seo_keywords'                     => $familyPerson['seo_keywords'] ?? null,
+    //             'business_category'                => !empty($familyPerson['business_category']) ? $familyPerson['business_category'] : null,
+    //             'business_subcategory'             => !empty($familyPerson['business_subcategory']) ? $familyPerson['business_subcategory'] : null,
+    //             'main_family_member'               => $familyPerson['main_family_member'] ?? 0,
+    //             'relationship_id'                  => !empty($familyPerson['relationship_id']) ? $familyPerson['relationship_id'] : null,
+    //             'shakh'                            => $familyPerson['shakh'] ?? null,
+    //             'updated_by'                       => $this->userId,
+    //         ];
+
+    //         // ── Existing person → UPDATE ──────────────────────────────────────────
+    //         if (!empty($familyPerson['family_person_id'])) {
+    //             $isKarobari = in_array($familyPerson['family_person_id'], $karobaripersonids);
+    //             $familyPersonstore = $this->familyPersonModel::where('id', $familyPerson['family_person_id'])
+    //                 ->where('family_id', $family->id)
+    //                 ->first();
+
+    //             if (!$familyPersonstore) {
+    //                 return $this->successresponse(422, 'message', "Family person not found for family_person_id {$familyPerson['family_person_id']}");
+    //             }
+
+    //             $familyPersonstore->update($personData);
+
+    //             // Update linked User record
+    //             $user = User::where('family_person_id', $familyPersonstore->id)->first();
+    //             if ($user) {
+    //                 $user->update([
+    //                     'firstname'        => $familyPersonstore->first_name,
+    //                     'lastname'         => $familyPersonstore->last_name,
+    //                     'email'            => $familyPersonstore->email,
+    //                     'contact_no'       => $familyPersonstore->mobile,
+    //                     'country_id'       => $familyPersonstore->address_country_id,
+    //                     'state_id'         => $familyPersonstore->address_state_id,
+    //                     'city_id'          => $familyPersonstore->address_city_id,
+    //                     'pincode'          => $familyPersonstore->address_pincode,
+    //                     'role_permissions' => $isKarobari ? 3 : ($familyPersonstore->main_family_member == 1 ? 2 : 1),
+    //                     'updated_by'       => $this->userId,
+    //                 ]);
+                    
+    //                 $rp = userrolepermission::where('id', $user->role_permissions)->first();
+    //                 if ($rp) {
+    //                     $user_rp = $rp->role_permissions;
+    //                     $this->user_permissionModel::updateOrCreate([
+    //                         'user_id' => $user->id,
+    //                     ], [
+    //                         'rp' => $user_rp,
+    //                         'created_by' => $this->userId
+    //                     ]);
+    //                 }
+    //             }
+    //             // ★ Member record: update or create, restore if soft-deleted
+    //             $isMain         = $familyPersonstore->main_family_member == 1;
+    //             $existingMember = $this->memberModel::where('family_person_id', $familyPersonstore->id)->first();
+
+    //             $memberData = [
+    //                 'family_id'          => $familyPersonstore->family_id,
+    //                 'family_person_id'   => $familyPersonstore->id,
+    //                 'lifetime_member_no' => $familyPerson['lifetime_member_no'] ?? null,
+    //                 'receipt_number'     => $familyPerson['receipt_number'] ?? null,
+    //                 'status'             => (!empty($familyPerson['lifetime_member_no']) && !empty($familyPerson['receipt_number'])) ? 1 : 0,
+    //                 'is_deleted'         => $isMain ? 0 : 1,  // restore if was deleted
+    //                 'updated_by'         => $this->userId,
+    //             ];
+
+    //             if ($existingMember) {
+    //                 $existingMember->update($memberData);
+    //             } else if ($isMain) {
+    //                 $memberData['created_by'] = $this->userId;
+    //                 $this->memberModel::create($memberData);
+    //             }
+
+    //         // ── New person → CREATE ───────────────────────────────────────────────
+    //         } else {
+
+    //             $personData['created_by'] = $this->userId;
+    //             $familyPersonstore        = $this->familyPersonModel::create($personData);
+    //             $passwordtoken            = Str::random(40);
+
+    //             // Create member record only for main member
+    //             if ($familyPersonstore->main_family_member == 1) {
+    //                 $this->memberModel::create([
+    //                     'family_id'          => $familyPersonstore->family_id,
+    //                     'family_person_id'   => $familyPersonstore->id,
+    //                     'lifetime_member_no' => $familyPerson['lifetime_member_no'] ?? null,
+    //                     'receipt_number'     => $familyPerson['receipt_number'] ?? null,
+    //                     'status'             => (!empty($familyPerson['lifetime_member_no']) && !empty($familyPerson['receipt_number'])) ? 1 : 0,
+    //                     'is_deleted'         => 0,
+    //                     'created_by'         => $this->userId,
+    //                 ]);
+    //             }
+
+    //             // Create User
+    //             $user = User::create([
+    //                 'firstname'        => $familyPersonstore->first_name,
+    //                 'lastname'         => $familyPersonstore->last_name,
+    //                 'role'             => 3,
+    //                 'email'            => $familyPersonstore->email,
+    //                 'password'         => Hash::make($familyPersonstore->email),
+    //                 'contact_no'       => $familyPersonstore->mobile,
+    //                 'country_id'       => $familyPersonstore->address_country_id,
+    //                 'state_id'         => $familyPersonstore->address_state_id,
+    //                 'city_id'          => $familyPersonstore->address_city_id,
+    //                 'pincode'          => $familyPersonstore->address_pincode,
+    //                 'role_permissions' => $familyPersonstore->main_family_member == 1 ? 2 : 1,
+    //                 'pass_token'       => $passwordtoken,
+    //                 'company_id'       => $this->companyId,
+    //                 'family_person_id' => $familyPersonstore->id,
+    //                 'created_by'       => $this->userId,
+    //             ]);
+    //             $rp = userrolepermission::where('id', $user->role_permissions)->first();
+    //             $user_rp = $rp->role_permissions;
+    //             $userrp = $this->user_permissionModel::updateOrCreate([
+    //                 'user_id' => $user->id,
+    //             ], [
+    //                 'rp' => $user_rp,
+    //                 'created_by' => $this->userId
+    //             ]);
+    //         }
+
+    //         $familyPersonIds[] = (string) $familyPersonstore->id;
+
+    //         if ($familyPersonstore->main_family_member == 1) {
+    //             $mainFamilyPersonId = $familyPersonstore->id;
+    //         }
+    //     }
+
+    //     // ── 7. Update family header ───────────────────────────────────────────────
+    //     $this->familyModel::where('id', $family->id)->update([
+    //         'mainFamilyMemberFullName' => $mainMemberFullName,
+    //         'familyPersonIds'          => json_encode($familyPersonIds),
+    //         'mainFamilyPersonId'       => $mainFamilyPersonId,
+    //         'updated_by'               => $this->userId,
+    //     ]);
+
+    //     return $this->successresponse(200, 'message', 'Family and family persons updated successfully');
+    // }
     public function familyUpdate(Request $request)
     {
         if ($this->rp['societymodule']['familymembers']['edit'] != 1) {
             return $this->successresponse(500, 'message', 'You are Unauthorized');
         }
 
+        // ── 1. Validation ────────────────────────────────────────────────
         $validator = Validator::make($request->all(), [
-            'family_id'             => 'required|integer',
-            'famliypersons'         => 'required|array',
-            'famliypersons.*.email' => 'required|email',
+            'family_id'                             => 'required|integer',
+            'famliypersons'                         => 'required|array|min:1',
+            'famliypersons.*.family_person_id'      => 'nullable|integer',
+            'famliypersons.*.first_name'            => 'required|string|max:255',
+            'famliypersons.*.email'                 => 'required|email|distinct',
+            'famliypersons.*.main_family_member'    => 'required|in:0,1',
+            'famliypersons.*.relationship_id'       => 'required_if:famliypersons.*.main_family_member,0|nullable|integer',
+            'famliypersons.*.dob'                   => 'nullable|date',
+            'famliypersons.*.age'                   => 'nullable|integer|min:0|max:150',
+            'famliypersons.*.address_pincode'       => 'nullable|integer',
+            'famliypersons.*.company_pincode'       => 'nullable|integer',
+        ], [
+            'family_id.required'                            => 'Family id is required',
+            'family_id.integer'                             => 'Family id must be a number',
+            'famliypersons.required'                        => 'Family persons are required',
+            'famliypersons.array'                           => 'Family persons must be an array',
+            'famliypersons.*.first_name.required'           => 'First name is required for family member :position',
+            'famliypersons.*.email.required'                => 'Email is required for family member :position',
+            'famliypersons.*.email.email'                   => 'Email is invalid for family member :position',
+            'famliypersons.*.email.distinct'                => 'Duplicate email found in the list (member :position)',
+            'famliypersons.*.main_family_member.required'   => 'Main family member flag is required for member :position',
+            'famliypersons.*.main_family_member.in'         => 'Main family member must be 0 or 1 (member :position)',
+            'famliypersons.*.relationship_id.required_if'   => 'Relationship is required for family member :position',
+            'famliypersons.*.dob.date'                      => 'Date of birth is invalid for member :position',
+            'famliypersons.*.age.integer'                   => 'Age must be a number for member :position',
+            'famliypersons.*.address_pincode.integer'       => 'Address pincode must be a number for member :position',
+            'famliypersons.*.company_pincode.integer'       => 'Company pincode must be a number for member :position',
         ]);
+
         if ($validator->fails()) {
             return $this->successresponse(422, 'message', $validator->errors()->first());
         }
 
-        // ── 1. Validate main-member rules ────────────────────────────────────────
-        $mainMembers = array_filter($request->famliypersons, function ($person) {
-            return isset($person['main_family_member']) && $person['main_family_member'] == 1;
-        });
+        // ── 2. Main member rules ─────────────────────────────────────────
+        $mainMembers = array_filter($request->famliypersons, fn($p) => ($p['main_family_member'] ?? 0) == 1);
 
         if (count($mainMembers) == 0) {
             return $this->successresponse(422, 'message', 'Main family member is required');
@@ -395,252 +890,259 @@ class FamilyPersonController extends commonController
             return $this->successresponse(422, 'message', 'Only one main family member is allowed');
         }
 
-        // ── 2. Validate email, lifetime_member_no & receipt_number uniqueness ────
-        foreach ($request->famliypersons as $index => $person) {
-
-            // Email uniqueness check
-            if (isset($person['email']) && !empty($person['email'])) {
-                $checkEmail = User::where('email', $person['email'])
-                    ->where('is_deleted', 0)
-                    ->when(!empty($person['family_person_id']), function ($q) use ($person) {
-                        $q->where('family_person_id', '!=', $person['family_person_id']);
-                    })
-                    ->exists();
-                if ($checkEmail) {
-                    return $this->successresponse(422, 'message', "Email already exists for family member at index {$index}");
-                }
-            }
-
-            if (isset($person['main_family_member']) && $person['main_family_member'] == 1) {
-
-                if ($person['lifetime_member_no'] !== null && $person['lifetime_member_no'] !== '') {
-                    $checkLifetime = $this->memberModel::where('lifetime_member_no', $person['lifetime_member_no'])
-                        ->where('is_deleted', 0)
-                        ->when(!empty($person['family_person_id']), function ($q) use ($person) {
-                            $q->where('family_person_id', '!=', $person['family_person_id']);
-                        })
-                        ->first();
-                    if ($checkLifetime) {
-                        return $this->successresponse(422, 'message', "Lifetime member number already exists for main family member at index {$index}");
-                    }
-                }
-
-                if ($person['receipt_number'] !== null && $person['receipt_number'] !== '') {
-                    $checkReceipt = $this->memberModel::where('receipt_number', $person['receipt_number'])
-                        ->where('is_deleted', 0)
-                        ->when(!empty($person['family_person_id']), function ($q) use ($person) {
-                            $q->where('family_person_id', '!=', $person['family_person_id']);
-                        })
-                        ->first();
-                    if ($checkReceipt) {
-                        return $this->successresponse(422, 'message', "Receipt number already exists for main family member at index {$index}");
-                    }
-                }
-            }
-        }
-
-        // ── 3. Load existing family ───────────────────────────────────────────────
+        // ── 3. Load existing family ──────────────────────────────────────
         $family = $this->familyModel::where('id', $request->family_id)->first();
         if (!$family) {
             return $this->successresponse(422, 'message', 'Family not found');
         }
 
-        // ── 4. Soft-delete persons & users removed from the list ─────────────────
-        $incomingPersonIds = array_filter(
-            array_column($request->famliypersons, 'family_person_id')
-        );
+        // ── 4. Uniqueness checks (ignore the person's own records) ───────
+        foreach ($request->famliypersons as $index => $person) {
+            $position = $index + 1;
+            $personId = $this->blankToNull($person['family_person_id'] ?? null);
 
-        $removedPersonIds = $this->familyPersonModel::where('family_id', $request->family_id)
-            ->whereNotIn('id', $incomingPersonIds)
-            ->pluck('id');
+            $emailExists = User::where('email', $person['email'])
+                ->where('is_deleted', 0)
+                ->when($personId, fn($q) => $q->where('family_person_id', '!=', $personId))
+                ->exists();
 
-        if ($removedPersonIds->isNotEmpty()) {
-            $this->familyPersonModel::whereIn('id', $removedPersonIds)
-                ->update(['is_deleted' => 1, 'updated_by' => $this->userId]);
+            if ($emailExists) {
+                return $this->successresponse(422, 'message', "Email already exists for family member {$position}");
+            }
 
-            User::whereIn('family_person_id', $removedPersonIds)
-                ->update(['is_deleted' => 1, 'updated_by' => $this->userId]);
-        }
+            if (($person['main_family_member'] ?? 0) == 1) {
+                $lifetimeNo = $this->blankToNull($person['lifetime_member_no'] ?? null);
+                $receiptNo  = $this->blankToNull($person['receipt_number'] ?? null);
 
-        // ── 5. Build main member full name ────────────────────────────────────────
-        $hasMainMember = array_values($mainMembers)[0];
-        $mainMemberFullName = trim(
-            ($hasMainMember['first_name'] ?? '') . ' ' .
-            ($hasMainMember['last_name']  ?? '') . ' ' .
-            ($hasMainMember['surname']    ?? '')
-        );
-
-        $familyPersonIds    = [];
-        $mainFamilyPersonId = null;
-        $karobaripersonids  = $this->karobarimemberModel::where('is_deleted', 0)->get()->pluck('familyPersonId')->toArray();
-        // ── 6. Loop through each person ───────────────────────────────────────────
-        foreach ($request->famliypersons as $familyPerson) {
-            
-            // ★ Fix: integer fields use null, string fields use null too
-            $personData = [
-                'family_id'                        => $family->id,
-                'first_name'                       => $familyPerson['first_name'] ?? null,
-                'last_name'                        => $familyPerson['last_name'] ?? null,
-                'surname'                          => $familyPerson['surname'] ?? null,
-                'full_name'                        => trim(($familyPerson['first_name'] ?? '') . ' ' . ($familyPerson['last_name'] ?? '') . ' ' . ($familyPerson['surname'] ?? '')),
-                'dob'                              => !empty($familyPerson['dob']) ? $familyPerson['dob'] : null,
-                'age'                              => !empty($familyPerson['age']) ? $familyPerson['age'] : null,
-                'email'                            => $familyPerson['email'] ?? null,
-                'mobile'                           => $familyPerson['mobile'] ?? null,
-                'address_house_no_building_name'   => $familyPerson['address_house_no_building_name'] ?? null,
-                'address_landmark'                 => $familyPerson['address_landmark'] ?? null,
-                'address_area'                     => $familyPerson['address_area'] ?? null,
-                'address_country_id'               => !empty($familyPerson['address_country_id']) ? $familyPerson['address_country_id'] : null,
-                'address_state_id'                 => !empty($familyPerson['address_state_id']) ? $familyPerson['address_state_id'] : null,
-                'address_city_id'                  => !empty($familyPerson['address_city_id']) ? $familyPerson['address_city_id'] : null,
-                'address_pincode'                  => !empty($familyPerson['address_pincode']) ? $familyPerson['address_pincode'] : null,
-                'marital_status'                   => $familyPerson['marital_status'] ?? null,
-                'gender'                           => $familyPerson['gender'] ?? null,
-                'job_role'                         => $familyPerson['job_role'] ?? null,
-                'company_name'                     => $familyPerson['company_name'] ?? null,
-                'company_house_no_building_name'   => $familyPerson['company_house_no_building_name'] ?? null,
-                'company_landmark'                 => $familyPerson['company_landmark'] ?? null,
-                'company_area'                     => $familyPerson['company_area'] ?? null,
-                'company_country_id'               => !empty($familyPerson['company_country_id']) ? $familyPerson['company_country_id'] : null,
-                'company_state_id'                 => !empty($familyPerson['company_state_id']) ? $familyPerson['company_state_id'] : null,
-                'company_city_id'                  => !empty($familyPerson['company_city_id']) ? $familyPerson['company_city_id'] : null,
-                'company_pincode'                  => !empty($familyPerson['company_pincode']) ? $familyPerson['company_pincode'] : null,
-                'business_intro'                   => $familyPerson['business_intro'] ?? null,
-                'services'                         => $familyPerson['services'] ?? null,
-                'seo_keywords'                     => $familyPerson['seo_keywords'] ?? null,
-                'business_category'                => !empty($familyPerson['business_category']) ? $familyPerson['business_category'] : null,
-                'business_subcategory'             => !empty($familyPerson['business_subcategory']) ? $familyPerson['business_subcategory'] : null,
-                'main_family_member'               => $familyPerson['main_family_member'] ?? 0,
-                'relationship_id'                  => !empty($familyPerson['relationship_id']) ? $familyPerson['relationship_id'] : null,
-                'shakh'                            => $familyPerson['shakh'] ?? null,
-                'updated_by'                       => $this->userId,
-            ];
-
-            // ── Existing person → UPDATE ──────────────────────────────────────────
-            if (!empty($familyPerson['family_person_id'])) {
-                $isKarobari = in_array($familyPerson['family_person_id'], $karobaripersonids);
-                $familyPersonstore = $this->familyPersonModel::where('id', $familyPerson['family_person_id'])
-                    ->where('family_id', $family->id)
-                    ->first();
-
-                if (!$familyPersonstore) {
-                    return $this->successresponse(422, 'message', "Family person not found for family_person_id {$familyPerson['family_person_id']}");
+                if ($lifetimeNo !== null) {
+                    $exists = $this->memberModel::where('lifetime_member_no', $lifetimeNo)
+                        ->where('is_deleted', 0)
+                        ->when($personId, fn($q) => $q->where('family_person_id', '!=', $personId))
+                        ->exists();
+                    if ($exists) {
+                        return $this->successresponse(422, 'message', 'Lifetime member number already exists for main family member');
+                    }
                 }
 
-                $familyPersonstore->update($personData);
+                if ($receiptNo !== null) {
+                    $exists = $this->memberModel::where('receipt_number', $receiptNo)
+                        ->where('is_deleted', 0)
+                        ->when($personId, fn($q) => $q->where('family_person_id', '!=', $personId))
+                        ->exists();
+                    if ($exists) {
+                        return $this->successresponse(422, 'message', 'Receipt number already exists for main family member');
+                    }
+                }
+            }
+        }
 
-                // Update linked User record
-                $user = User::where('family_person_id', $familyPersonstore->id)->first();
-                if ($user) {
-                    $user->update([
+        // ── 5. Save everything in one transaction ────────────────────────
+        DB::connection('dynamic_connection')->beginTransaction();
+        DB::beginTransaction();
+
+        try {
+            // 5a. Soft-delete persons, users and members removed from the list
+            $incomingPersonIds = array_filter(array_column($request->famliypersons, 'family_person_id'));
+
+            $removedPersonIds = $this->familyPersonModel::where('family_id', $family->id)
+                ->where('is_deleted', 0)
+                ->whereNotIn('id', $incomingPersonIds)
+                ->pluck('id');
+
+            if ($removedPersonIds->isNotEmpty()) {
+                $this->familyPersonModel::whereIn('id', $removedPersonIds)
+                    ->update(['is_deleted' => 1, 'updated_by' => $this->userId]);
+
+                $this->memberModel::whereIn('family_person_id', $removedPersonIds)
+                    ->update(['is_deleted' => 1, 'updated_by' => $this->userId]);
+
+                User::whereIn('family_person_id', $removedPersonIds)
+                    ->update(['is_deleted' => 1, 'updated_by' => $this->userId]);
+            }
+
+            // 5b. Main member full name
+            $main = array_values($mainMembers)[0];
+            $mainMemberFullName = trim(
+                ($main['first_name'] ?? '') . ' ' . ($main['last_name'] ?? '') . ' ' . ($main['surname'] ?? '')
+            );
+
+            $stringFields = [
+                'first_name', 'last_name', 'surname', 'email', 'mobile',
+                'address_house_no_building_name', 'address_landmark', 'address_area',
+                'marital_status', 'gender', 'job_role', 'company_name',
+                'company_house_no_building_name', 'company_landmark', 'company_area',
+                'business_intro', 'services', 'seo_keywords', 'shakh',
+            ];
+            $intFields = [
+                'dob', 'age',
+                'address_country_id', 'address_state_id', 'address_city_id', 'address_pincode',
+                'company_country_id', 'company_state_id', 'company_city_id', 'company_pincode',
+                'business_category', 'business_subcategory',
+            ];
+
+            $familyPersonIds    = [];
+            $mainFamilyPersonId = null;
+            $karobaripersonids  = $this->karobarimemberModel::where('is_deleted', 0)
+                ->pluck('familyPersonId')->toArray();
+
+            // 5c. Loop through each person
+            foreach ($request->famliypersons as $familyPerson) {
+
+                $personData = [
+                    'family_id'          => $family->id,
+                    'main_family_member' => (int) ($familyPerson['main_family_member'] ?? 0),
+                    'relationship_id'    => $this->blankToNull($familyPerson['relationship_id'] ?? null) ?? 0, // NOT NULL column
+                    'updated_by'         => $this->userId,
+                ];
+
+                foreach (array_merge($stringFields, $intFields) as $field) {
+                    $personData[$field] = $this->blankToNull($familyPerson[$field] ?? null);
+                }
+
+                $personData['full_name'] = trim(
+                    ($familyPerson['first_name'] ?? '') . ' ' .
+                    ($familyPerson['last_name'] ?? '') . ' ' .
+                    ($familyPerson['surname'] ?? '')
+                );
+
+                $lifetimeNo = $this->blankToNull($familyPerson['lifetime_member_no'] ?? null);
+                $receiptNo  = $this->blankToNull($familyPerson['receipt_number'] ?? null);
+                $memberStatus = ($lifetimeNo !== null && $receiptNo !== null) ? 1 : 0;
+
+                $existingId = $this->blankToNull($familyPerson['family_person_id'] ?? null);
+
+                // ── Existing person → UPDATE ─────────────────────────────
+                if ($existingId) {
+                    $familyPersonstore = $this->familyPersonModel::where('id', $existingId)
+                        ->where('family_id', $family->id)
+                        ->first();
+
+                    if (!$familyPersonstore) {
+                        throw new \RuntimeException("Family person not found for family_person_id {$existingId}");
+                    }
+
+                    $familyPersonstore->update($personData);
+
+                    $isMain     = $familyPersonstore->main_family_member == 1;
+                    $isKarobari = in_array($familyPersonstore->id, $karobaripersonids);
+                    $roleId     = $isKarobari ? 3 : ($isMain ? 2 : 1);
+
+                    // Linked user
+                    $user = User::where('family_person_id', $familyPersonstore->id)->first();
+                    if ($user) {
+                        $user->update([
+                            'firstname'        => $familyPersonstore->first_name,
+                            'lastname'         => $familyPersonstore->last_name,
+                            'email'            => $familyPersonstore->email,
+                            'contact_no'       => $familyPersonstore->mobile,
+                            'country_id'       => $familyPersonstore->address_country_id,
+                            'state_id'         => $familyPersonstore->address_state_id,
+                            'city_id'          => $familyPersonstore->address_city_id,
+                            'pincode'          => $familyPersonstore->address_pincode,
+                            'role_permissions' => $roleId,
+                            'updated_by'       => $this->userId,
+                        ]);
+
+                        $rp = userrolepermission::where('id', $roleId)->first();
+                        if ($rp) {
+                            $this->user_permissionModel::updateOrCreate(
+                                ['user_id' => $user->id],
+                                ['rp' => $rp->role_permissions, 'created_by' => $this->userId]
+                            );
+                        }
+                    }
+
+                    // Member record: update, or create if main, restore if soft-deleted
+                    $existingMember = $this->memberModel::where('family_person_id', $familyPersonstore->id)->first();
+
+                    $memberData = [
+                        'family_id'          => $familyPersonstore->family_id,
+                        'family_person_id'   => $familyPersonstore->id,
+                        'lifetime_member_no' => $lifetimeNo,
+                        'receipt_number'     => $receiptNo,
+                        'status'             => $memberStatus,
+                        'is_deleted'         => $isMain ? 0 : 1,
+                        'updated_by'         => $this->userId,
+                    ];
+
+                    if ($existingMember) {
+                        $existingMember->update($memberData);
+                    } elseif ($isMain) {
+                        $memberData['created_by'] = $this->userId;
+                        $this->memberModel::create($memberData);
+                    }
+
+                // ── New person → CREATE ──────────────────────────────────
+                } else {
+                    $personData['created_by'] = $this->userId;
+                    $familyPersonstore = $this->familyPersonModel::create($personData);
+
+                    $isMain = $familyPersonstore->main_family_member == 1;
+                    $roleId = $isMain ? 2 : 1;
+
+                    if ($isMain) {
+                        $this->memberModel::create([
+                            'family_id'          => $familyPersonstore->family_id,
+                            'family_person_id'   => $familyPersonstore->id,
+                            'lifetime_member_no' => $lifetimeNo,
+                            'receipt_number'     => $receiptNo,
+                            'status'             => $memberStatus,
+                            'is_deleted'         => 0,
+                            'created_by'         => $this->userId,
+                        ]);
+                    }
+
+                    $user = User::create([
                         'firstname'        => $familyPersonstore->first_name,
                         'lastname'         => $familyPersonstore->last_name,
+                        'role'             => 3,
                         'email'            => $familyPersonstore->email,
+                        'password'         => Hash::make($familyPersonstore->email),
                         'contact_no'       => $familyPersonstore->mobile,
                         'country_id'       => $familyPersonstore->address_country_id,
                         'state_id'         => $familyPersonstore->address_state_id,
                         'city_id'          => $familyPersonstore->address_city_id,
                         'pincode'          => $familyPersonstore->address_pincode,
-                        'role_permissions' => $isKarobari ? 3 : ($familyPersonstore->main_family_member == 1 ? 2 : 1),
-                        'updated_by'       => $this->userId,
+                        'role_permissions' => $roleId,
+                        'pass_token'       => Str::random(40),
+                        'company_id'       => $this->companyId,
+                        'family_person_id' => $familyPersonstore->id,
+                        'created_by'       => $this->userId,
                     ]);
-                    
-                    $rp = userrolepermission::where('id', $user->role_permissions)->first();
-                    if ($rp) {
-                        $user_rp = $rp->role_permissions;
-                        $this->user_permissionModel::updateOrCreate([
-                            'user_id' => $user->id,
-                        ], [
-                            'rp' => $user_rp,
-                            'created_by' => $this->userId
-                        ]);
-                    }
-                }
-                // ★ Member record: update or create, restore if soft-deleted
-                $isMain         = $familyPersonstore->main_family_member == 1;
-                $existingMember = $this->memberModel::where('family_person_id', $familyPersonstore->id)->first();
 
-                $memberData = [
-                    'family_id'          => $familyPersonstore->family_id,
-                    'family_person_id'   => $familyPersonstore->id,
-                    'lifetime_member_no' => $familyPerson['lifetime_member_no'] ?? null,
-                    'receipt_number'     => $familyPerson['receipt_number'] ?? null,
-                    'status'             => (!empty($familyPerson['lifetime_member_no']) && !empty($familyPerson['receipt_number'])) ? 1 : 0,
-                    'is_deleted'         => $isMain ? 0 : 1,  // restore if was deleted
-                    'updated_by'         => $this->userId,
-                ];
-
-                if ($existingMember) {
-                    $existingMember->update($memberData);
-                } else if ($isMain) {
-                    $memberData['created_by'] = $this->userId;
-                    $this->memberModel::create($memberData);
+                    $rp = userrolepermission::where('id', $roleId)->first();
+                    $this->user_permissionModel::updateOrCreate(
+                        ['user_id' => $user->id],
+                        ['rp' => $rp->role_permissions, 'created_by' => $this->userId]
+                    );
                 }
 
-            // ── New person → CREATE ───────────────────────────────────────────────
-            } else {
+                $familyPersonIds[] = (string) $familyPersonstore->id;
 
-                $personData['created_by'] = $this->userId;
-                $familyPersonstore        = $this->familyPersonModel::create($personData);
-                $passwordtoken            = Str::random(40);
-
-                // Create member record only for main member
                 if ($familyPersonstore->main_family_member == 1) {
-                    $this->memberModel::create([
-                        'family_id'          => $familyPersonstore->family_id,
-                        'family_person_id'   => $familyPersonstore->id,
-                        'lifetime_member_no' => $familyPerson['lifetime_member_no'] ?? null,
-                        'receipt_number'     => $familyPerson['receipt_number'] ?? null,
-                        'status'             => (!empty($familyPerson['lifetime_member_no']) && !empty($familyPerson['receipt_number'])) ? 1 : 0,
-                        'is_deleted'         => 0,
-                        'created_by'         => $this->userId,
-                    ]);
+                    $mainFamilyPersonId = $familyPersonstore->id;
                 }
-
-                // Create User
-                $user = User::create([
-                    'firstname'        => $familyPersonstore->first_name,
-                    'lastname'         => $familyPersonstore->last_name,
-                    'role'             => 3,
-                    'email'            => $familyPersonstore->email,
-                    'password'         => Hash::make($familyPersonstore->email),
-                    'contact_no'       => $familyPersonstore->mobile,
-                    'country_id'       => $familyPersonstore->address_country_id,
-                    'state_id'         => $familyPersonstore->address_state_id,
-                    'city_id'          => $familyPersonstore->address_city_id,
-                    'pincode'          => $familyPersonstore->address_pincode,
-                    'role_permissions' => $familyPersonstore->main_family_member == 1 ? 2 : 1,
-                    'pass_token'       => $passwordtoken,
-                    'company_id'       => $this->companyId,
-                    'family_person_id' => $familyPersonstore->id,
-                    'created_by'       => $this->userId,
-                ]);
-                $rp = userrolepermission::where('id', $user->role_permissions)->first();
-                $user_rp = $rp->role_permissions;
-                $userrp = $this->user_permissionModel::updateOrCreate([
-                    'user_id' => $user->id,
-                ], [
-                    'rp' => $user_rp,
-                    'created_by' => $this->userId
-                ]);
             }
 
-            $familyPersonIds[] = (string) $familyPersonstore->id;
+            // 5d. Update family header
+            $this->familyModel::where('id', $family->id)->update([
+                'mainFamilyMemberFullName' => $mainMemberFullName,
+                'familyPersonIds'          => json_encode($familyPersonIds),
+                'mainFamilyPersonId'       => $mainFamilyPersonId,
+                'updated_by'               => $this->userId,
+            ]);
 
-            if ($familyPersonstore->main_family_member == 1) {
-                $mainFamilyPersonId = $familyPersonstore->id;
-            }
+            DB::connection('dynamic_connection')->commit();
+            DB::commit();
+
+            return $this->successresponse(200, 'message', 'Family and family persons updated successfully');
+
+        } catch (\Throwable $e) {
+            DB::connection('dynamic_connection')->rollBack();
+            DB::rollBack();
+            Log::error('familyUpdate failed: ' . $e->getMessage());
+            return $this->successresponse(500, 'message', 'Something went wrong while updating family');
         }
-
-        // ── 7. Update family header ───────────────────────────────────────────────
-        $this->familyModel::where('id', $family->id)->update([
-            'mainFamilyMemberFullName' => $mainMemberFullName,
-            'familyPersonIds'          => json_encode($familyPersonIds),
-            'mainFamilyPersonId'       => $mainFamilyPersonId,
-            'updated_by'               => $this->userId,
-        ]);
-
-        return $this->successresponse(200, 'message', 'Family and family persons updated successfully');
     }
     // family destroy with all family persons
     public function familyDestroy($id)
