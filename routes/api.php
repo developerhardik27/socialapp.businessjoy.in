@@ -233,6 +233,7 @@ Route::middleware(['checkToken'])->group(function () {
         Route::get('/user/search/{id}', 'show')->name('user.search');
         Route::get('/user/edit/{id}', 'edit')->name('user.edit');
         Route::put('/user/statusupdate/{id}', 'statusupdate')->name('user.statusupdate');
+        Route::put('/user/webloginupdate/{id}', 'webloginstatusupdate')->name('user.webloginstatusupdate');
         Route::post('/user/update/{id}', 'update')->name('user.update');
         Route::put('/user/delete/{id}', 'destroy')->name('user.delete');
         Route::post('/user/changepassword/{id}', 'changepassword')->name('user.changepassword');
@@ -890,6 +891,7 @@ Route::middleware(['checkToken'])->group(function () {
         Route::get('/family/edit/{id}', 'familyEdit')->name('family.edit');
         Route::put('/updatefamily/{id}', 'familyUpdate')->name('family.update');
         Route::put('/deletefamily/{id}', 'familyDestroy')->name('family.destroy');
+        Route::put('/deleteaccount', 'deleteaccount')->name('user.deleteaccount');
     });
 
     $BiodataController = getversion('BiodataController');

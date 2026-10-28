@@ -249,7 +249,7 @@ class userController extends commonController
         if ($this->userId == 1 && isset($request->request_id)) {
             $loginhistory->where('user_id', $request->request_id);
         } else {
-            $loginhistory->where('user_id', $this->userId);
+            $loginhistory->where('user_id', $request->user_id);
         }
 
         $loginhistory = $loginhistory
@@ -474,7 +474,7 @@ class userController extends commonController
             ->join('company_details', 'company.company_details_id', '=', 'company_details.id')
             ->join('user_role', 'users.role', '=', 'user_role.id')
             ->leftJoin('users as creator', 'users.created_by', '=', 'creator.id')
-            ->select('users.id', 'users.user_login', 'users.firstname', 'users.lastname', 'users.email', 'users.password', 'users.contact_no', 'country.country_name', 'state.state_name', 'city.city_name', 'users.pincode', 'company_details.name as company_name', 'user_role.role as user_role', 'users.img', 'users.created_by', 'creator.firstname as creator_firstname', 'creator.lastname as creator_lastname', DB::raw("DATE_FORMAT(users.created_at, '%d-%M-%Y %h:%i %p')as created_at_formatted"), 'users.updated_by', 'users.is_active')
+            ->select('users.id', 'users.user_login', 'users.firstname', 'users.lastname', 'users.email', 'users.password', 'users.contact_no', 'country.country_name', 'state.state_name', 'city.city_name', 'users.pincode', 'company_details.name as company_name', 'user_role.role as user_role', 'users.img', 'users.created_by', 'creator.firstname as creator_firstname', 'creator.lastname as creator_lastname', DB::raw("DATE_FORMAT(users.created_at, '%d-%M-%Y %h:%i %p')as created_at_formatted"), 'users.updated_by', 'users.is_active', 'users.web_login')
             ->where('users.is_deleted', 0);
 
         if ($this->companyId != 1) {
@@ -511,7 +511,7 @@ class userController extends commonController
             ->join('company_details', 'company.company_details_id', '=', 'company_details.id')
             ->join('user_role', 'users.role', '=', 'user_role.id')
             ->leftJoin('users as creator', 'users.created_by', '=', 'creator.id')
-            ->select('users.id', 'users.firstname', 'users.lastname', 'users.email', 'users.contact_no', 'country.country_name', 'state.state_name', 'city.city_name', 'users.pincode', 'company_details.name as company_name', 'user_role.role as user_role', 'users.img', 'users.created_by', 'creator.firstname as creator_firstname', 'creator.lastname as creator_lastname', DB::raw("DATE_FORMAT(users.created_at, '%d-%M-%Y %h:%i %p')as created_at_formatted"), 'users.updated_by', 'users.is_active')
+            ->select('users.id', 'users.firstname', 'users.lastname', 'users.email', 'users.contact_no', 'country.country_name', 'state.state_name', 'city.city_name', 'users.pincode', 'company_details.name as company_name', 'user_role.role as user_role', 'users.img', 'users.created_by', 'creator.firstname as creator_firstname', 'creator.lastname as creator_lastname', DB::raw("DATE_FORMAT(users.created_at, '%d-%M-%Y %h:%i %p')as created_at_formatted"), 'users.updated_by', 'users.is_active', 'users.web_login')
             ->where('users.is_deleted', 0);
 
         if ($this->companyId != 1) {
@@ -893,6 +893,33 @@ class userController extends commonController
             'is_active' => $request->status
         ]);
         return $this->successresponse(200, 'message', 'user status succesfully updated');
+    }
+
+    /**
+     * Summary of webloginstatusupdate
+     * update website login permission (web_login) of user
+     * @param \Illuminate\Http\Request $request
+     * @param string $id
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function webloginstatusupdate(Request $request, string $id)
+    {
+        if ($this->rp['adminmodule']['user']['edit'] != 1) {
+            return $this->successresponse(500, 'message', 'You are Unauthorized');
+        }
+        $user = User::find($id);
+        if (!$user) {
+            return $this->successresponse(404, 'message', 'No Such user Found!');
+        }
+        if ($this->rp['adminmodule']['user']['alldata'] != 1) {
+            if ($user->created_by != $this->userId) {
+                return $this->successresponse(500, 'message', 'You are Unauthorized');
+            }
+        }
+        $user->update([
+            'web_login' => $request->web_login
+        ]);
+        return $this->successresponse(200, 'message', 'user web login permission succesfully updated');
     }
 
     /**

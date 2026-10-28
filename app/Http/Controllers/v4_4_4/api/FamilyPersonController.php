@@ -1192,6 +1192,86 @@ class FamilyPersonController extends commonController
 
         return $this->successresponse(200, 'message', 'Family deleted successfully');
     }
+
+    /**
+     * Delete own account - user passes only their own user_id (token params).
+     * No permission check: a user can always remove their own account.
+     * Soft-deletes everywhere: users, family_person, members, kraobari_member,
+     * and removes the person id from families.familyPersonIds.
+     */
+    public function deleteaccount(Request $request)
+    {
+        $user = User::where('id', $this->userId)->where('is_deleted', 0)->first();
+
+        if (!$user) {
+            return $this->successresponse(404, 'message', 'User not found');
+        }
+
+        $familyPersonId = $user->family_person_id;
+
+        DB::connection('dynamic_connection')->beginTransaction();
+        DB::beginTransaction();
+
+        try {
+            // 1. master users table - deactivate account + clear tokens
+            $user->update([
+                'is_deleted'      => 1,
+                'is_active'       => 0,
+                'user_login'      => 0,
+                'api_token'       => null,
+                'super_api_token' => null,
+            ]);
+
+            if ($familyPersonId) {
+                $familyPerson = $this->familyPersonModel::where('id', $familyPersonId)->first();
+
+                if ($familyPerson) {
+                    // 2. family_person - soft delete
+                    $familyPerson->update([
+                        'is_deleted' => 1,
+                        'updated_by' => $this->userId,
+                    ]);
+
+                    // 3. families - remove this id from familyPersonIds + clear mainFamilyPersonId
+                    $family = $this->familyModel::where('id', $familyPerson->family_id)->first();
+                    if ($family) {
+                        $ids = json_decode($family->familyPersonIds, true) ?: [];
+                        $ids = array_values(array_filter($ids, fn($pid) => (string) $pid !== (string) $familyPersonId));
+
+                        $familyUpdate = [
+                            'familyPersonIds' => json_encode($ids),
+                            'updated_by'      => $this->userId,
+                        ];
+                        if ((string) $family->mainFamilyPersonId === (string) $familyPersonId) {
+                            $familyUpdate['mainFamilyPersonId'] = null;
+                        }
+                        $family->update($familyUpdate);
+                    }
+
+                    // 4. members - soft delete
+                    $this->memberModel::where('family_person_id', $familyPersonId)
+                        ->where('is_deleted', 0)
+                        ->update(['is_deleted' => 1, 'updated_by' => $this->userId]);
+
+                    // 5. kraobari_member - soft delete
+                    $this->karobarimemberModel::where('familyPersonId', $familyPersonId)
+                        ->where('is_deleted', 0)
+                        ->update(['is_deleted' => 1, 'updated_by' => $this->userId]);
+                }
+            }
+
+            DB::connection('dynamic_connection')->commit();
+            DB::commit();
+
+            return $this->successresponse(200, 'message', 'Account deleted successfully');
+
+        } catch (\Throwable $e) {
+            DB::connection('dynamic_connection')->rollBack();
+            DB::rollBack();
+            Log::error('deleteaccount failed: ' . $e->getMessage());
+            return $this->successresponse(500, 'message', 'Something went wrong while deleting account');
+        }
+    }
 }
 
 

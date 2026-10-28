@@ -697,6 +697,17 @@ class AdminLoginController extends Controller
             ], 403);
         }
 
+        // Website login allowed only when web_login = 1 (app-only users are blocked)
+        if (!$isSuperAdminImpersonation && $admin->web_login != 1) {
+            $request->session()->flush();
+            Auth::guard('admin')->logout();
+            $this->save_user_login_history($request, 'direct', 'Website login not allowed.');
+            return response()->json([
+                'status' => 403,
+                'message' => 'Website login is not allowed for this account. Please use the mobile app.'
+            ], 403);
+        }
+
         // Generate API token
         do {
             $api_token = Str::random(60);

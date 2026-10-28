@@ -123,7 +123,7 @@ class LoginController extends Controller
         }
 
         // Record login activity
-        $this->recordLoginActivity($user, $request, 'api', 'success');
+        $this->recordLoginActivity($user, $request, 'direct', 'success');
 
         return response()->json([
             'status' => 200,
@@ -198,7 +198,7 @@ class LoginController extends Controller
         ]);
 
         // Record logout activity
-        $this->recordLoginActivity($user, $request, 'api', 'logout');
+        // $this->recordLoginActivity($user, $request, 'api', 'logout');
 
         return response()->json([
             'status' => 200,
@@ -327,25 +327,31 @@ class LoginController extends Controller
     private function recordLoginActivity($user, $request, $via, $status)
     {
         try {
-            $ip = $request->header('X-Forwarded-For') ?? $request->server('REMOTE_ADDR');
-            
+            // client can send ip / country / device / browser in the request; otherwise detect server-side
+            $ip = $request->input('ip')
+                ?? ($request->header('X-Forwarded-For') ?? $request->server('REMOTE_ADDR'));
+
             // Get device and browser info
             $agent = new \Jenssegers\Agent\Agent();
-            $device = $agent->isDesktop() ? 'Desktop' : ($agent->isMobile() ? 'Mobile' : 'Tablet');
-            $browser = $agent->browser();
+            $device = $request->input('device')
+                ?? ($agent->isDesktop() ? 'Desktop' : ($agent->isMobile() ? 'Mobile' : 'Tablet'));
+            $browser = $request->input('browser') ?? $agent->browser();
 
-            // Get country from IP
-            $country = 'Unknown';
-            try {
-                $client = new \GuzzleHttp\Client();
-                $response = $client->get("http://ip-api.com/json/{$ip}");
-                $data = json_decode($response->getBody(), true);
-                $country = $data['status'] === 'fail' ? 'Unknown' : $data['country'];
-            } catch (\Exception $e) {
-                // Continue with Unknown country
+            // Get country from request or lookup by IP
+            $country = $request->input('country');
+            if (empty($country)) {
+                $country = 'Unknown';
+                try {
+                    $client = new \GuzzleHttp\Client();
+                    $response = $client->get("http://ip-api.com/json/{$ip}");
+                    $data = json_decode($response->getBody(), true);
+                    $country = $data['status'] === 'fail' ? 'Unknown' : $data['country'];
+                } catch (\Exception $e) {
+                    // Continue with Unknown country
+                }
             }
 
-            \App\Models\user_activity::create([
+            $activityData = [
                 'user_id' => $user->id,
                 'username' => $user->email,
                 'ip' => $ip,
@@ -355,7 +361,9 @@ class LoginController extends Controller
                 'status' => $status,
                 'via' => $via,
                 'company_id' => $user->company_id,
-            ]);
+            ];
+
+            \App\Models\user_activity::create($activityData);
 
         } catch (\Exception $e) {
             \Log::error('Failed to record login activity: ' . $e->getMessage());

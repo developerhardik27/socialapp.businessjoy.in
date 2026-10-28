@@ -123,21 +123,25 @@ class karobarimemberController extends commonController
 
             if ($existing) {
                 if ($existing->is_deleted == 1) {
+                    // was removed before → restore + give karobari role again
                     $existing->update([
                         'is_deleted' => 0,
+                        'memberId'   => $memberId,
                         'updated_by' => $this->userId,
                     ]);
+                    $this->updateUserRole($familyPersonId, 3);
                 }
+                // already active karobari → keep record & permissions as-is, no change
             } else {
+                // newly added → create + give karobari role
                 $this->karobarimemberModel::create([
                     'familyPersonId' => $familyPersonId,
                     'memberId'       => $memberId,   // ← member id if exists, null if not
                     'created_by'     => $this->userId,
                     'is_deleted'     => 0,
                 ]);
+                $this->updateUserRole($familyPersonId, 3);
             }
-
-            $this->updateUserRole($familyPersonId, 3);
         }
 
         // ── 2. Soft-delete removed karobari members ───────────────────────────────

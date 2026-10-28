@@ -63,6 +63,7 @@
                 <th>CompanyName</th>
                 <th>UserRole</th>
                 <th>Status</th>
+                <th>Web Login</th>
                 @if (session('user_id') == 1)
                     <th>Login</th>
                 @endif
@@ -211,6 +212,30 @@
                                             <div id="status_${row.id}" data-toggle="tooltip" data-placement="bottom" data-original-title="Active">
                                                 <button data-status="${row.id}" class="status-deactive btn btn-outline-dark btn-rounded btn-sm my-0" >Inactive</button>
                                                 ${isSubscriptionExpired}
+                                            </div>
+                                        `;
+                                    }
+                                @endif
+                                return actionBtns;
+                            }
+                        },
+                        {
+                            data: 'web_login',
+                            name: 'web_login',
+                            orderable: true,
+                            searchable: false,
+                            render: function(data, type, row) {
+                                let actionBtns = ``;
+                                @if (session('user_permissions.adminmodule.user.edit') == '1')
+                                    if (data == 1) {
+                                        actionBtns += `<div id="weblogin_${row.id}" data-toggle="tooltip" data-placement="bottom" data-original-title="Disallow Website Login">
+                                            <button data-weblogin="${row.id}" class="weblogin-allow btn btn-outline-success btn-rounded btn-sm my-0" >Allowed</button>
+                                        </div>
+                                        `;
+                                    } else {
+                                        actionBtns += `
+                                            <div id="weblogin_${row.id}" data-toggle="tooltip" data-placement="bottom" data-original-title="Allow Website Login">
+                                                <button data-weblogin="${row.id}" class="weblogin-disallow btn btn-outline-dark btn-rounded btn-sm my-0" >Not Allowed</button>
                                             </div>
                                         `;
                                     }
@@ -424,6 +449,100 @@
                         loaderhide();
                         console.log(xhr
                             .responseText); // Log the full error response for debugging
+                        var errorMessage = "";
+                        try {
+                            var responseJSON = JSON.parse(xhr.responseText);
+                            errorMessage = responseJSON.message || "An error occurred";
+                        } catch (e) {
+                            errorMessage = "An error occurred";
+                        }
+                        Toast.fire({
+                            icon: "error",
+                            title: errorMessage
+                        });
+                    }
+                });
+            }
+
+            //  web login allow to not allowed
+            $(document).on("click", ".weblogin-allow", function() {
+                element = $(this);
+                showConfirmationDialog(
+                    'Are you sure?',
+                    'to disallow website login for this user?',
+                    'Yes, change',
+                    'No, cancel',
+                    'question',
+                    () => {
+                        loadershow();
+                        var webloginid = element.data('weblogin');
+                        changeweblogin(webloginid, 0);
+                    }
+                );
+            });
+
+            //  web login not allowed to allow
+            $(document).on("click", ".weblogin-disallow", function() {
+                element = $(this);
+                showConfirmationDialog(
+                    'Are you sure?',
+                    'to allow website login for this user?',
+                    'Yes, change',
+                    'No, cancel',
+                    'question',
+                    () => {
+                        loadershow();
+                        var webloginid = element.data('weblogin');
+                        changeweblogin(webloginid, 1);
+                    }
+                );
+            });
+
+            function changeweblogin(userid, webloginvalue) {
+                let webLoginUpdateUrl = "{{ route('user.webloginstatusupdate', '__userId__') }}".replace('__userId__',
+                    userid);
+                $.ajax({
+                    type: 'PUT',
+                    url: webLoginUpdateUrl,
+                    data: {
+                        web_login: webloginvalue,
+                        token: "{{ session()->get('api_token') }}",
+                        company_id: "{{ session()->get('company_id') }}",
+                        user_id: "{{ session()->get('user_id') }}"
+                    },
+                    success: function(response) {
+                        if (response.status == 200) {
+                            Toast.fire({
+                                icon: "success",
+                                title: response.message
+                            });
+                            if (webloginvalue == 1) {
+                                $('#weblogin_' + userid).html('<button data-weblogin= ' +
+                                    userid +
+                                    ' class="weblogin-allow btn btn-outline-success btn-rounded btn-sm my-0" >Allowed</button>'
+                                );
+                            } else {
+                                $('#weblogin_' + userid).html('<button data-weblogin= ' +
+                                    userid +
+                                    ' class="weblogin-disallow btn btn-outline-dark btn-rounded btn-sm my-0" >Not Allowed</button>'
+                                );
+                            }
+                        } else if (response.status == 500) {
+                            Toast.fire({
+                                icon: "error",
+                                title: response.message
+                            });
+                        } else {
+                            Toast.fire({
+                                icon: "error",
+                                title: "something went wrong!"
+                            });
+                        }
+                        loaderhide();
+                    },
+                    error: function(xhr, status, error) {
+                        loaderhide();
+                        console.log(xhr.responseText);
                         var errorMessage = "";
                         try {
                             var responseJSON = JSON.parse(xhr.responseText);
