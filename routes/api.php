@@ -60,6 +60,7 @@ if (!function_exists('getversion')) {
 Route::controller(LoginController::class)->prefix('auth')->group(function () {
     Route::post('/login', 'login')->name('api.login');
     Route::post('/logout', 'logout')->name('api.logout');
+    Route::post('/forgot-password', 'forgotPassword')->name('api.forgot.password');
 });
 
 // Protected Login API Routes (Auth required)

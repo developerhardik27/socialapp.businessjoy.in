@@ -5,10 +5,12 @@ namespace App\Http\Controllers\api;
 use App\Models\User;
 use App\Models\company;
 use App\Models\company_detail;
+use App\Mail\ForgotPasswordMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use App\Http\Controllers\Controller;
@@ -318,6 +320,56 @@ class LoginController extends Controller
                 'token_type' => 'Bearer',
                 'expires_in' => config('sanctum.expiration', 525600)
             ]
+        ]);
+    }
+
+    /**
+     * Handle forgot password API request
+     * Sends a password reset link to the user's email.
+     * Same as the web forgot_password flow - no reCAPTCHA check.
+     */
+    public function forgotPassword(Request $request)
+    {
+        // Validate request
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 422,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Find user by email
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'Email not registered'
+            ], 404);
+        }
+
+        // Check if user is deleted
+        if ($user->is_deleted == 1) {
+            return response()->json([
+                'status' => 403,
+                'message' => 'Account has been deleted'
+            ], 403);
+        }
+
+        // Generate reset token and send reset link email
+        $user->pass_token = Str::random(40);
+        $user->save();
+
+        Mail::to($user->email)->send(new ForgotPasswordMail($user));
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Password reset link sent. Please check your email inbox.'
         ]);
     }
 

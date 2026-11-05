@@ -24,7 +24,7 @@ class commonController extends Controller
         }
         $dbname = company::find($id);
 
-        $this->companyVersion = $dbname->app_version;
+        $this->companyVersion = 'v4_4_4';
         config(['database.connections.dynamic_connection.database' => $dbname->dbname]);
 
         // Establish connection to the dynamic database
