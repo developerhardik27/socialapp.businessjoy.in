@@ -215,6 +215,17 @@ class DonorController extends commonController
     public function persons(Request $request)
     {
         $persons = $this->familyPersonModel::where('is_deleted', 0)->get();
+
+        $userImages = User::whereIn('family_person_id', $persons->pluck('id'))
+            ->where('is_deleted', 0)
+            ->pluck('img', 'family_person_id');
+
+        $persons->each(function ($person) use ($userImages) {
+            $img = $userImages[$person->id] ?? null;
+            $person->img = $img;
+            $person->image_url = $img ? url('uploads/' . $img) : null;
+        });
+
         return $this->successresponse(200, 'data', $persons);
     }
 }

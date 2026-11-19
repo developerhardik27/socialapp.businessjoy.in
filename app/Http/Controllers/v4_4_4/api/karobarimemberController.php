@@ -63,10 +63,14 @@ class karobarimemberController extends commonController
 
             ->leftJoin($this->masterdbname.'.city as company_city', 'company_city.id', '=', 'family_person.company_city_id')
             ->leftJoin($this->masterdbname.'.city as address_city', 'address_city.id', '=', 'family_person.address_city_id')
+            ->leftJoin($this->masterdbname.'.users as fp_user', function ($join) {
+                $join->on('fp_user.family_person_id', '=', 'family_person.id')
+                    ->where('fp_user.is_deleted', 0);
+            })
             ->where('kraobari_member.is_deleted', 0)
             ->where('family_person.is_deleted', 0)
             
-            ->select('kraobari_member.*', 'family_person.*','bsc.name as business_subcategory_name',
+            ->select('kraobari_member.*', 'family_person.*','fp_user.img','bsc.name as business_subcategory_name',
             'bc.name as business_category_name',
 
             'company_country.country_name as company_country_name',
@@ -80,7 +84,9 @@ class karobarimemberController extends commonController
              if ($this->rp['societymodule']['karobarimember']['alldata'] != 1) {
                 $members = $members->where('kraobari_member.created_by', $this->userId);
             }
-            $members = $members->get();
+            $members = $members->get()->each(function ($member) {
+                $member->image_url = $member->img ? url('uploads/' . $member->img) : null;
+            });
             if ($members->isEmpty()) {
             return DataTables::of($members)
                 ->with([
@@ -199,10 +205,15 @@ class karobarimemberController extends commonController
             ->leftJoin($this->masterdbname . '.state as address_state', 'address_state.id', '=', 'family_person.address_state_id')
             ->leftJoin($this->masterdbname . '.city as company_city', 'company_city.id', '=', 'family_person.company_city_id')
             ->leftJoin($this->masterdbname . '.city as address_city', 'address_city.id', '=', 'family_person.address_city_id')
+            ->leftJoin($this->masterdbname.'.users as fp_user', function ($join) {
+                $join->on('fp_user.family_person_id', '=', 'family_person.id')
+                    ->where('fp_user.is_deleted', 0);
+            })
             ->whereIn('family_person.family_id', $eligibleFamilyIds)
             ->where('family_person.is_deleted', 0)
             ->select(
                 'family_person.*',
+                'fp_user.img',
                 'members.id as member_id',
                 'members.lifetime_member_no',
                 'members.receipt_number',
@@ -218,7 +229,10 @@ class karobarimemberController extends commonController
             )
             // ✅ Mark each person if already selected as karobari
             ->selectRaw('CASE WHEN family_person.id IN (' . implode(',', $alreadyKarobariIds ?: [0]) . ') THEN 1 ELSE 0 END as is_karobari')
-            ->get();
+            ->get()
+            ->each(function ($member) {
+                $member->image_url = $member->img ? url('uploads/' . $member->img) : null;
+            });
 
         if ($members->isEmpty()) {
             return $this->successresponse(404, 'message', 'No Data Found');

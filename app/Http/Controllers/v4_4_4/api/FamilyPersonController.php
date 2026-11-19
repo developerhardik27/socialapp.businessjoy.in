@@ -68,10 +68,21 @@ class FamilyPersonController extends commonController
                 ->make(true);
         }
 
-        $family->map(function ($item) {
+        $allPersonIds = $family->flatMap(function ($item) {
+            return json_decode($item->familyPersonIds, true) ?? [];
+        })->unique()->values()->all();
+
+        $userImages = User::whereIn('family_person_id', $allPersonIds)
+            ->where('is_deleted', 0)
+            ->pluck('img', 'family_person_id');
+
+        $family->map(function ($item) use ($userImages) {
             $ids = json_decode($item->familyPersonIds, true) ?? [];
 
-            $item->family_persons = $this->familyPersonModel::whereIn('id', $ids)->get();
+            $item->family_persons = $this->familyPersonModel::whereIn('id', $ids)->get()
+                ->each(function ($person) use ($userImages) {
+                    $this->attachUserImage($person, $userImages[$person->id] ?? null);
+                });
 
             return $item;
         });
@@ -276,6 +287,46 @@ class FamilyPersonController extends commonController
         return ($value === '' || $value === null) ? null : $value;
     }
 
+    /**
+     * Attach the linked user's profile image (users.img) to a family person record.
+     * Image is stored as "{companyId}/user_{userId}/{filename}" under public/uploads.
+     */
+    private function attachUserImage($person, $img)
+    {
+        $person->img = $img;
+        $person->image_url = $img ? url('uploads/' . $img) : null;
+        return $person;
+    }
+
+    /**
+     * Store an uploaded family person image into the linked user's img field.
+     * Follows the same convention as userController image uploads.
+     */
+    private function storeFamilyPersonImage($file, $user)
+    {
+        if (!$file || !$user) {
+            return;
+        }
+
+        $imageName = $user->firstname . time() . '.' . $file->getClientOriginalExtension();
+        $dirPath = public_path('uploads/') . $this->companyId . '/user_' . $user->id;
+
+        if (!file_exists($dirPath)) {
+            mkdir($dirPath, 0755, true);
+        }
+
+        if ($file->move($dirPath, $imageName)) {
+            if (!empty($user->img)) {
+                $oldImagePath = public_path('uploads/') . $user->img;
+                if (is_file($oldImagePath)) {
+                    unlink($oldImagePath);
+                }
+            }
+            $user->img = $this->companyId . '/user_' . $user->id . '/' . $imageName;
+            $user->save();
+        }
+    }
+
     public function familyStore(Request $request)
     {
         if ($this->rp['societymodule']['familymembers']['add'] != 1) {
@@ -293,6 +344,7 @@ class FamilyPersonController extends commonController
             'famliypersons.*.age'                   => 'nullable|integer|min:0|max:150',
             'famliypersons.*.address_pincode'       => 'nullable|integer',
             'famliypersons.*.company_pincode'       => 'nullable|integer',
+            'famliypersons.*.img'                   => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ], [
             'famliypersons.required'                        => 'Family persons are required',
             'famliypersons.array'                           => 'Family persons must be an array',
@@ -307,6 +359,9 @@ class FamilyPersonController extends commonController
             'famliypersons.*.age.integer'                   => 'Age must be a number for member :position',
             'famliypersons.*.address_pincode.integer'       => 'Address pincode must be a number for member :position',
             'famliypersons.*.company_pincode.integer'       => 'Company pincode must be a number for member :position',
+            'famliypersons.*.img.image'                     => 'Image must be a jpg, jpeg or png file for member :position',
+            'famliypersons.*.img.mimes'                     => 'Image must be a jpg, jpeg or png file for member :position',
+            'famliypersons.*.img.max'                       => 'Image must not be greater than 2MB for member :position',
         ]);
 
         if ($validator->fails()) {
@@ -379,7 +434,7 @@ class FamilyPersonController extends commonController
 
             $familyPersonIds = [];
 
-            foreach ($request->famliypersons as $familyPerson) {
+            foreach ($request->famliypersons as $index => $familyPerson) {
 
                 $personData = [
                     'family_id'          => $family->id,
@@ -447,6 +502,8 @@ class FamilyPersonController extends commonController
                     'rp'         => $rp->role_permissions,
                     'created_by' => $this->userId,
                 ]);
+
+                $this->storeFamilyPersonImage($request->file("famliypersons.{$index}.img"), $user);
             }
 
             $this->familyModel::where('id', $family->id)
@@ -513,12 +570,17 @@ class FamilyPersonController extends commonController
 
         ->leftJoin($this->masterdbname.'.city as company_city', 'company_city.id', '=', 'family_person.company_city_id')
         ->leftJoin($this->masterdbname.'.city as address_city', 'address_city.id', '=', 'family_person.address_city_id')
+        ->leftJoin($this->masterdbname.'.users as fp_user', function ($join) {
+            $join->on('fp_user.family_person_id', '=', 'family_person.id')
+                ->where('fp_user.is_deleted', 0);
+        })
 
         ->where('family_person.family_id', $id)
         ->where('family_person.is_deleted', 0)
 
         ->select(
             'family_person.*',
+            'fp_user.img',
             'bsc.name as business_subcategory_name',
             'bc.name as business_category_name',
 
@@ -531,7 +593,10 @@ class FamilyPersonController extends commonController
             'company_city.city_name as company_city_name',
             'address_city.city_name as address_city_name'
         )
-        ->get();
+        ->get()
+        ->each(function ($person) {
+            $person->image_url = $person->img ? url('uploads/' . $person->img) : null;
+        });
 
         $familydata = [
             'familydetails' => $family,
@@ -556,6 +621,14 @@ class FamilyPersonController extends commonController
             ::where('family_id', $id)
             ->where('is_deleted', 0)
             ->get();
+
+        $userImages = User::whereIn('family_person_id', $familyPersons->pluck('id'))
+            ->where('is_deleted', 0)
+            ->pluck('img', 'family_person_id');
+
+        $familyPersons->each(function ($person) use ($userImages) {
+            $this->attachUserImage($person, $userImages[$person->id] ?? null);
+        });
 
         $familydata = [
             'familydetails' => $family,
@@ -858,6 +931,7 @@ class FamilyPersonController extends commonController
             'famliypersons.*.age'                   => 'nullable|integer|min:0|max:150',
             'famliypersons.*.address_pincode'       => 'nullable|integer',
             'famliypersons.*.company_pincode'       => 'nullable|integer',
+            'famliypersons.*.img'                   => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ], [
             'family_id.required'                            => 'Family id is required',
             'family_id.integer'                             => 'Family id must be a number',
@@ -874,6 +948,9 @@ class FamilyPersonController extends commonController
             'famliypersons.*.age.integer'                   => 'Age must be a number for member :position',
             'famliypersons.*.address_pincode.integer'       => 'Address pincode must be a number for member :position',
             'famliypersons.*.company_pincode.integer'       => 'Company pincode must be a number for member :position',
+            'famliypersons.*.img.image'                     => 'Image must be a jpg, jpeg or png file for member :position',
+            'famliypersons.*.img.mimes'                     => 'Image must be a jpg, jpeg or png file for member :position',
+            'famliypersons.*.img.max'                       => 'Image must not be greater than 2MB for member :position',
         ]);
 
         if ($validator->fails()) {
@@ -986,7 +1063,7 @@ class FamilyPersonController extends commonController
                 ->pluck('familyPersonId')->toArray();
 
             // 5c. Loop through each person
-            foreach ($request->famliypersons as $familyPerson) {
+            foreach ($request->famliypersons as $index => $familyPerson) {
 
                 $personData = [
                     'family_id'          => $family->id,
@@ -1117,6 +1194,8 @@ class FamilyPersonController extends commonController
                     );
                 }
 
+                $this->storeFamilyPersonImage($request->file("famliypersons.{$index}.img"), $user ?? null);
+
                 $familyPersonIds[] = (string) $familyPersonstore->id;
 
                 if ($familyPersonstore->main_family_member == 1) {
@@ -1144,6 +1223,46 @@ class FamilyPersonController extends commonController
             return $this->successresponse(500, 'message', 'Something went wrong while updating family');
         }
     }
+    /**
+     * Get the profile photo of a family person.
+     * family_person.id -> users.family_person_id -> users.img
+     * Returns the image file directly; JSON errors when missing.
+     */
+    public function familyPersonPhoto($id)
+    {
+        if ($this->rp['societymodule']['familymembers']['view'] != 1) {
+            return $this->successresponse(500, 'message', 'You are Unauthorized');
+        }
+
+        $familyPerson = $this->familyPersonModel::where('id', $id)
+            ->where('is_deleted', 0)
+            ->first();
+
+        if (!$familyPerson) {
+            return $this->successresponse(404, 'message', 'Family person not found');
+        }
+
+        $user = User::where('family_person_id', $familyPerson->id)
+            ->where('is_deleted', 0)
+            ->first();
+
+        if (!$user) {
+            return $this->successresponse(404, 'message', 'User not found for this family person');
+        }
+
+        if (empty($user->img)) {
+            return $this->successresponse(404, 'message', 'No image found for this family person');
+        }
+
+        $imagePath = public_path('uploads/' . $user->img);
+
+        if (!is_file($imagePath)) {
+            return $this->successresponse(404, 'message', 'Image file not found');
+        }
+
+        return response()->file($imagePath);
+    }
+
     // family destroy with all family persons
     public function familyDestroy($id)
     {

@@ -58,10 +58,14 @@ class MemberController extends commonController
 
             ->leftJoin($this->masterdbname.'.city as company_city', 'company_city.id', '=', 'family_person.company_city_id')
             ->leftJoin($this->masterdbname.'.city as address_city', 'address_city.id', '=', 'family_person.address_city_id')
+            ->leftJoin($this->masterdbname.'.users as fp_user', function ($join) {
+                $join->on('fp_user.family_person_id', '=', 'family_person.id')
+                    ->where('fp_user.is_deleted', 0);
+            })
             ->where('members.is_deleted', 0)
             ->where('family_person.is_deleted', 0)
             
-            ->select('members.*', 'family_person.*','bsc.name as business_subcategory_name',
+            ->select('members.*', 'family_person.*','fp_user.img','bsc.name as business_subcategory_name',
             'bc.name as business_category_name',
 
             'company_country.country_name as company_country_name',
@@ -75,7 +79,9 @@ class MemberController extends commonController
              if ($this->rp['societymodule']['member']['alldata'] != 1) {
                 $members = $members->where('members.created_by', $this->userId);
             }
-            $members = $members->get();
+            $members = $members->get()->each(function ($member) {
+                $member->image_url = $member->img ? url('uploads/' . $member->img) : null;
+            });
             if ($members->isEmpty()) {
             return DataTables::of($members)
                 ->with([
@@ -106,10 +112,14 @@ class MemberController extends commonController
 
             ->leftJoin($this->masterdbname.'.city as company_city', 'company_city.id', '=', 'family_person.company_city_id')
             ->leftJoin($this->masterdbname.'.city as address_city', 'address_city.id', '=', 'family_person.address_city_id')
+            ->leftJoin($this->masterdbname.'.users as fp_user', function ($join) {
+                $join->on('fp_user.family_person_id', '=', 'family_person.id')
+                    ->where('fp_user.is_deleted', 0);
+            })
             ->where('members.is_deleted', 0)
             ->where('family_person.is_deleted', 0)
             
-            ->select('members.*', 'family_person.*','bsc.name as business_subcategory_name',
+            ->select('members.*', 'family_person.*','fp_user.img','bsc.name as business_subcategory_name',
             'bc.name as business_category_name',
 
             'company_country.country_name as company_country_name',
@@ -119,7 +129,10 @@ class MemberController extends commonController
             'address_state.state_name as address_state_name',
 
             'company_city.city_name as company_city_name',
-            'address_city.city_name as address_city_name')->where('members.id', $id)->get();
+            'address_city.city_name as address_city_name')->where('members.id', $id)->get()
+            ->each(function ($member) {
+                $member->image_url = $member->img ? url('uploads/' . $member->img) : null;
+            });
             if ($members->isEmpty()) {
                 return $this->successresponse(404, 'message', 'No Data Found');
             }
@@ -131,14 +144,19 @@ class MemberController extends commonController
             return $this->successresponse(500, 'message', 'You are Unauthorized');
         }
         $members = $this->memberModel::leftJoin('family_person', 'members.family_person_id', '=', 'family_person.id')
+        ->leftJoin($this->masterdbname.'.users as fp_user', function ($join) {
+            $join->on('fp_user.family_person_id', '=', 'family_person.id')
+                ->where('fp_user.is_deleted', 0);
+        })
         ->where('members.is_deleted', 0)
             ->where('family_person.is_deleted', 0)
             
-            ->select('members.*', 'family_person.*')
+            ->select('members.*', 'family_person.*', 'fp_user.img')
             ->where('members.id', $id)->first();
             if (!$members) {
                 return $this->successresponse(404, 'message', 'No Data Found');
             }
+        $members->image_url = $members->img ? url('uploads/' . $members->img) : null;
         return $this->successresponse(200, 'data', $members);
     }
     public function update(Request $request,$id)

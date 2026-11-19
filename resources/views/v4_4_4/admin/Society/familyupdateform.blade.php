@@ -237,6 +237,11 @@
                             <input type="text" class="form-control f-surname" name="famliypersons[${i}][surname]" placeholder="Surname" />
                         </div>
                         <div class="col-sm-4 mb-2">
+                            <label class="form-label">Photo:</label>
+                            <input type="file" class="form-control person-img-input" name="famliypersons[${i}][img]" accept="image/jpeg,image/jpg,image/png" />
+                            <img class="person-img-preview mt-1" style="display:none;max-width:80px;border-radius:6px;" alt="Preview" />
+                        </div>
+                        <div class="col-sm-4 mb-2">
                             <label class="form-label">DOB:</label>
                             <input type="date" class="form-control f-dob" name="famliypersons[${i}][dob]" />
                         </div>

@@ -535,10 +535,15 @@ class KarobarimeetingController extends commonController
             ->leftJoin($this->masterdbname . '.state as address_state', 'address_state.id', '=', 'family_person.address_state_id')
             ->leftJoin($this->masterdbname . '.city as company_city', 'company_city.id', '=', 'family_person.company_city_id')
             ->leftJoin($this->masterdbname . '.city as address_city', 'address_city.id', '=', 'family_person.address_city_id')
+            ->leftJoin($this->masterdbname.'.users as fp_user', function ($join) {
+                $join->on('fp_user.family_person_id', '=', 'family_person.id')
+                    ->where('fp_user.is_deleted', 0);
+            })
             ->select(
                 'kraobari_member.*',
                 'family_person.full_name',
                 'family_person.email',
+                'fp_user.img',
                 'members.lifetime_member_no',
                 'members.receipt_number',
                 'members.status as member_status',
@@ -551,7 +556,10 @@ class KarobarimeetingController extends commonController
                 'company_city.city_name as company_city_name',
                 'address_city.city_name as address_city_name'
             )
-            ->get();
+            ->get()
+            ->each(function ($member) {
+                $member->image_url = $member->img ? url('uploads/' . $member->img) : null;
+            });
             
         if ($karobariMembers->isEmpty()) {
             return $this->successresponse(404, 'message', 'No karobari members found');

@@ -206,6 +206,11 @@
                             <input type="text" class="form-control" name="famliypersons[${i}][surname]" placeholder="Surname" />
                         </div>
                         <div class="col-sm-4 mb-2">
+                            <label class="form-label">Photo:</label>
+                            <input type="file" class="form-control person-img-input" name="famliypersons[${i}][img]" accept="image/jpeg,image/jpg,image/png" />
+                            <img class="person-img-preview mt-1" style="display:none;max-width:80px;border-radius:6px;" alt="Preview" />
+                        </div>
+                        <div class="col-sm-4 mb-2">
                             <label class="form-label">DOB:</label>
                             <input type="date" class="form-control" name="famliypersons[${i}][dob]" />
                         </div>
@@ -252,7 +257,9 @@
                         </div>
                         <div class="col-sm-4 mb-2 d-flex align-items-end">
                             <div class="custom-control custom-checkbox">
-                                <input type="checkbox" class="custom-control-input main-member-check" id="main_member_${i}" name="famliypersons[${i}][main_family_member]" value="1">
+                                <input type="hidden" name="famliypersons[${i}][main_family_member]" value="0">
+                                <input type="checkbox" class="custom-control-input main-member-check"
+                                    id="main_member_${i}" name="famliypersons[${i}][main_family_member]" value="1">
                                 <label class="custom-control-label" for="main_member_${i}">Main Family Member</label>
                             </div>
                         </div>
@@ -384,6 +391,15 @@
                 fillSelect(card.find('.relation-select'), relations, 'id', 'relation', 'Select Relation');
                 fillSelect(card.find('.business-category-select'), businessCategories, 'id', 'name', 'Select Category');
 
+                card.find('.person-img-input').on('change', function() {
+                    var preview = card.find('.person-img-preview');
+                    if (this.files && this.files[0]) {
+                        preview.attr('src', URL.createObjectURL(this.files[0])).show();
+                    } else {
+                        preview.hide().attr('src', '');
+                    }
+                });
+
                 card.find('.address-country-select').on('change', function() {
                     loadStates($(this).val(), card.find('.address-state-select'), '', card.find(
                         '.address-city-select'), '');
@@ -510,7 +526,12 @@
                         $(this).prop('disabled', true);
                     }
                 });
-                var formData = $(this).serialize();
+                var formData = new FormData(this);
+                $('#personsContainer .person-card').each(function() {
+                    var idx = $(this).data('index');
+                    var checked = $(this).find('.main-member-check').is(':checked');
+                    formData.set('famliypersons[' + idx + '][main_family_member]', checked ? 1 : 0);
+                });
                 $(emptied).prop('disabled', false);
 
                 ajaxRequest('POST', "{{ route('family.store') }}", formData)

@@ -889,6 +889,7 @@ Route::middleware(['checkToken'])->group(function () {
         Route::get('/loadbusinesssubcategory/{categoryId}', 'loadbusinesssubcategory')->name('loadbusinesssubcategory.show');
         Route::post('/addfamily', 'familyStore')->name('family.store');
         Route::get('/family/{id}', 'familyShow')->name('family.show');
+        Route::get('/familyPerson/{id}/photo', 'familyPersonPhoto')->name('family.person.photo');
         Route::get('/family/edit/{id}', 'familyEdit')->name('family.edit');
         Route::put('/updatefamily/{id}', 'familyUpdate')->name('family.update');
         Route::put('/deletefamily/{id}', 'familyDestroy')->name('family.destroy');

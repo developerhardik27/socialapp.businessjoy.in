@@ -92,11 +92,16 @@
     }
 
     function ajaxRequest(type, url, data) {
-        return $.ajax({
+        var options = {
             type,
             url,
             data
-        });
+        };
+        if (typeof FormData !== 'undefined' && data instanceof FormData) {
+            options.processData = false;
+            options.contentType = false;
+        }
+        return $.ajax(options);
     }
 
     function handleAjaxError(xhr) {
