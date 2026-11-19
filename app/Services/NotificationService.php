@@ -21,6 +21,7 @@ class NotificationService
 {
     protected $companyId;
     protected $actorId;
+    protected $actorName;
     protected $notificationModel;
     protected $userDeviceModel;
 
@@ -52,6 +53,7 @@ class NotificationService
     public function notifyUser($recipientId, string $type, string $title, string $body, string $itemType, $itemId)
     {
         if (empty($recipientId)) {
+            Log::info("NotificationService: {$type}/{$itemType}#{$itemId} skipped - no owner found");
             return;
         }
         $this->createAndPush([(int) $recipientId], $type, $title, $body, $itemType, $itemId);
@@ -82,16 +84,44 @@ class NotificationService
     }
 
     /**
+     * Actor's display name (firstname + lastname from users table).
+     */
+    protected function actorDisplayName()
+    {
+        if ($this->actorName === null) {
+            $actor = DB::connection()->table('users')->where('id', $this->actorId)
+                ->select('firstname', 'lastname')->first();
+            $this->actorName = $actor ? trim($actor->firstname . ' ' . $actor->lastname) : '';
+        }
+        return $this->actorName;
+    }
+
+    /**
      * Insert one notification per recipient (skipping the actor and
      * exact-duplicate unread notifications) then push via Expo.
+     * `{actor}` in title/body is replaced with the actor's display name.
      */
     protected function createAndPush(array $recipientIds, string $type, string $title, string $body, string $itemType, $itemId)
     {
+        // company DB may not have the notification tables yet - skip silently
+        try {
+            if (!\Illuminate\Support\Facades\Schema::connection('dynamic_connection')->hasTable('notifications')) {
+                Log::warning("NotificationService: notifications table missing on dynamic_connection - skipped {$type}");
+                return;
+            }
+        } catch (\Throwable $e) {
+            return;
+        }
+
+        $title = str_replace('{actor}', $this->actorDisplayName(), $title);
+        $body  = str_replace('{actor}', $this->actorDisplayName(), $body);
+
         $recipientIds = array_values(array_unique(array_filter($recipientIds, function ($id) {
             return $id && $id != $this->actorId;
         })));
 
         if (empty($recipientIds)) {
+            Log::info("NotificationService: {$type}/{$itemType}#{$itemId} skipped - no recipients (actor {$this->actorId} excluded)");
             return;
         }
 
@@ -106,6 +136,7 @@ class NotificationService
                 ->where('is_read', 0)
                 ->exists();
             if ($exists) {
+                Log::info("NotificationService: {$type}/{$itemType}#{$itemId} duplicate skipped for user {$userId}");
                 continue;
             }
 
@@ -125,6 +156,7 @@ class NotificationService
             return;
         }
 
+        Log::info('NotificationService: ' . count($created) . " notification(s) created for {$type}/{$itemType}#{$itemId} by actor {$this->actorId}");
         $this->push($created, $type, $title, $body, $itemType, $itemId);
     }
 

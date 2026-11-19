@@ -556,7 +556,7 @@ class EventController extends commonController
             $event = $this->eventModel::find($request->event_id);
             if ($event) {
                 (new \App\Services\NotificationService($this->companyId, $this->userId))
-                    ->notifyUser($event->created_by, 'comment', 'New Comment', 'Someone commented on your event', 'event', $event->id);
+                    ->notifyUser($event->created_by, 'comment', 'New Comment', '{actor} commented on your event', 'event', $event->id);
             }
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::warning('Notification failed: ' . $e->getMessage());
@@ -686,7 +686,7 @@ class EventController extends commonController
             $event = $this->eventModel::find($eventId);
             if ($event) {
                 (new \App\Services\NotificationService($this->companyId, $this->userId))
-                    ->notifyUser($event->created_by, 'like', 'New Like', 'Someone liked your event', 'event', $event->id);
+                    ->notifyUser($event->created_by, 'like', 'New Like', '{actor} liked your event', 'event', $event->id);
             }
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::warning('Notification failed: ' . $e->getMessage());

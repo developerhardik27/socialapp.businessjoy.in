@@ -5,7 +5,9 @@ namespace App\Http\Controllers\v4_4_4\api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class NotificationController extends commonController
 {
@@ -24,6 +26,16 @@ class NotificationController extends commonController
 
     }
 
+    // true only when the resolved company DB actually has the notification tables
+    private function tablesReady($table)
+    {
+        try {
+            return Schema::connection('dynamic_connection')->hasTable($table);
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
     /**
      * POST device/register
      * Register the logged-in user's device token for push notifications.
@@ -36,6 +48,9 @@ class NotificationController extends commonController
         ]);
         if ($validator->fails()) {
             return $this->successresponse(422, 'message', $validator->errors()->first());
+        }
+        if (!$this->tablesReady('user_devices')) {
+            return $this->successresponse(500, 'message', 'Notification feature not available for this company');
         }
 
         // one row per token: re-registering assigns it to the current user
@@ -59,6 +74,9 @@ class NotificationController extends commonController
         if ($validator->fails()) {
             return $this->successresponse(422, 'message', $validator->errors()->first());
         }
+        if (!$this->tablesReady('user_devices')) {
+            return $this->successresponse(200, 'message', 'Device unregistered successfully');
+        }
 
         $this->userDeviceModel::where('user_id', $this->userId)
             ->where('push_token', $request->push_token)
@@ -74,6 +92,13 @@ class NotificationController extends commonController
     {
         $perPage = (int) $request->get('per_page', 20);
         $perPage = ($perPage > 0 && $perPage <= 100) ? $perPage : 20;
+
+        if (!$this->tablesReady('notifications')) {
+            $empty = new LengthAwarePaginator([], 0, $perPage, 1, [
+                'path' => $request->url(), 'query' => $request->query(),
+            ]);
+            return $this->successresponse(200, 'data', $empty);
+        }
 
         $notifications = $this->notificationModel
             ::leftJoin($this->masterdbname . '.users as actor', 'actor.id', '=', 'notifications.actor_id')
@@ -104,6 +129,9 @@ class NotificationController extends commonController
      */
     public function markAsRead($id)
     {
+        if (!$this->tablesReady('notifications')) {
+            return $this->successresponse(404, 'message', 'No such notification found');
+        }
         $notification = $this->notificationModel
             ::where('id', $id)
             ->where('user_id', $this->userId) // users can only touch their own
@@ -123,6 +151,9 @@ class NotificationController extends commonController
      */
     public function markAllAsRead()
     {
+        if (!$this->tablesReady('notifications')) {
+            return $this->successresponse(200, 'message', 'All notifications marked as read');
+        }
         $this->notificationModel::where('user_id', $this->userId)
             ->where('is_read', 0)
             ->update(['is_read' => 1]);
@@ -135,6 +166,9 @@ class NotificationController extends commonController
      */
     public function unreadCount()
     {
+        if (!$this->tablesReady('notifications')) {
+            return $this->successresponse(200, 'count', 0);
+        }
         $count = $this->notificationModel::where('user_id', $this->userId)
             ->where('is_read', 0)
             ->count();

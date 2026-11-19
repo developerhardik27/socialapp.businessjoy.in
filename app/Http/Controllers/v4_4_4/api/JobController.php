@@ -441,7 +441,7 @@ class JobController extends commonController
             $job = $this->jobModel::find($request->job_id);
             if ($job) {
                 (new \App\Services\NotificationService($this->companyId, $this->userId))
-                    ->notifyUser($job->created_by, 'comment', 'New Comment', 'Someone commented on your job', 'job', $job->id);
+                    ->notifyUser($job->created_by, 'comment', 'New Comment', '{actor} commented on your job', 'job', $job->id);
             }
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::warning('Notification failed: ' . $e->getMessage());
@@ -556,7 +556,7 @@ class JobController extends commonController
             $job = $this->jobModel::find($jobId);
             if ($job) {
                 (new \App\Services\NotificationService($this->companyId, $this->userId))
-                    ->notifyUser($job->created_by, 'like', 'New Like', 'Someone liked your job', 'job', $job->id);
+                    ->notifyUser($job->created_by, 'like', 'New Like', '{actor} liked your job', 'job', $job->id);
             }
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::warning('Notification failed: ' . $e->getMessage());

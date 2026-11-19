@@ -507,7 +507,7 @@ class PostController extends commonController
             $post = $this->postModel::find($request->post_id);
             if ($post) {
                 (new \App\Services\NotificationService($this->companyId, $this->userId))
-                    ->notifyUser($post->created_by, 'comment', 'New Comment', 'Someone commented on your post', 'post', $post->id);
+                    ->notifyUser($post->created_by, 'comment', 'New Comment', '{actor} commented on your post', 'post', $post->id);
             }
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::warning('Notification failed: ' . $e->getMessage());
@@ -621,7 +621,7 @@ class PostController extends commonController
             $post = $this->postModel::find($postId);
             if ($post) {
                 (new \App\Services\NotificationService($this->companyId, $this->userId))
-                    ->notifyUser($post->created_by, 'like', 'New Like', 'Someone liked your post', 'post', $post->id);
+                    ->notifyUser($post->created_by, 'like', 'New Like', '{actor} liked your post', 'post', $post->id);
             }
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::warning('Notification failed: ' . $e->getMessage());
