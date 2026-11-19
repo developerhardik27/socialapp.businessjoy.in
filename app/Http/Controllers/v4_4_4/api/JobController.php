@@ -220,6 +220,12 @@ class JobController extends commonController
         if(!$job){
             return $this->successresponse(500, 'message', 'Failed to create job');
         }
+        try {
+            (new \App\Services\NotificationService($this->companyId, $this->userId))
+                ->notifyAllUsers('job', 'New Job', 'A new job has been posted', 'job', $job->id);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Notification failed: ' . $e->getMessage());
+        }
         return $this->successresponse(200, 'message', 'Job created successfully');
     }
     
@@ -431,6 +437,15 @@ class JobController extends commonController
         if(!$jobComment){
             return $this->errorresponse(500, 'message', 'Job comment not created!');
         }
+        try {
+            $job = $this->jobModel::find($request->job_id);
+            if ($job) {
+                (new \App\Services\NotificationService($this->companyId, $this->userId))
+                    ->notifyUser($job->created_by, 'comment', 'New Comment', 'Someone commented on your job', 'job', $job->id);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Notification failed: ' . $e->getMessage());
+        }
         return $this->successresponse(200, 'message', 'Job comment created successfully');
     }
     
@@ -513,6 +528,7 @@ class JobController extends commonController
                     'is_deleted' => 0,
                     'updated_by' => $this->userId,
                 ]);
+                $this->notifyJobOwner($request->job_id);
                 return $this->successresponse(200, 'message', 'Job liked successfully.');
             }
             $exist->update([
@@ -531,7 +547,20 @@ class JobController extends commonController
        if(!$jobLike){
         return $this->errorresponse(500, 'message', 'Job not liked!');
        }
+       $this->notifyJobOwner($request->job_id);
        return $this->successresponse(200, 'message', 'Job liked successfully.');
+    }
+    private function notifyJobOwner($jobId)
+    {
+        try {
+            $job = $this->jobModel::find($jobId);
+            if ($job) {
+                (new \App\Services\NotificationService($this->companyId, $this->userId))
+                    ->notifyUser($job->created_by, 'like', 'New Like', 'Someone liked your job', 'job', $job->id);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Notification failed: ' . $e->getMessage());
+        }
     }
     public function jobComments($id)
     {

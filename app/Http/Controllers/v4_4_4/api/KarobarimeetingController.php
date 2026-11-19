@@ -125,6 +125,12 @@ class KarobarimeetingController extends commonController
         if(!$meeting){
             return $this->successresponse(500, 'message', 'Failed to create meeting');
         }
+        try {
+            (new \App\Services\NotificationService($this->companyId, $this->userId))
+                ->notifyKarobariMembers('karobari_meeting', 'New Karobari Meeting', $meeting->meeting_name, 'karobari_meeting', $meeting->id);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Notification failed: ' . $e->getMessage());
+        }
         return $this->successresponse(200, 'message', 'Meeting created successfully');
     }
     
@@ -205,7 +211,13 @@ class KarobarimeetingController extends commonController
             'pincode' => $request->pincode,
             'updated_by' => $this->userId
         ]);
-        
+
+        try {
+            (new \App\Services\NotificationService($this->companyId, $this->userId))
+                ->notifyKarobariMembers('karobari_meeting_edited', 'Karobari Meeting Updated', $meeting->meeting_name, 'karobari_meeting', $meeting->id);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Notification failed: ' . $e->getMessage());
+        }
         return $this->successresponse(200, 'message', 'Meeting updated successfully', $meeting);
     }
     

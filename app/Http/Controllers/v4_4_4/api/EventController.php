@@ -264,6 +264,12 @@ class EventController extends commonController
             'video' => json_encode($videoPaths),
         ]);
 
+        try {
+            (new \App\Services\NotificationService($this->companyId, $this->userId))
+                ->notifyAllUsers('event', 'New Event', 'A new event has been added', 'event', $event->id);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Notification failed: ' . $e->getMessage());
+        }
         return $this->successresponse(200, 'message', 'Event created successfully');
     }
     
@@ -546,6 +552,15 @@ class EventController extends commonController
         if(!$eventComment){
             return $this->errorresponse(500, 'message', 'Event comment not created!');
         }
+        try {
+            $event = $this->eventModel::find($request->event_id);
+            if ($event) {
+                (new \App\Services\NotificationService($this->companyId, $this->userId))
+                    ->notifyUser($event->created_by, 'comment', 'New Comment', 'Someone commented on your event', 'event', $event->id);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Notification failed: ' . $e->getMessage());
+        }
         return $this->successresponse(200, 'message', 'Event comment created successfully');
     }
     
@@ -643,6 +658,7 @@ class EventController extends commonController
                     'is_deleted' => 0,
                     'updated_by' => $this->userId,
                 ]);
+                $this->notifyEventOwner($request->event_id);
                 return $this->successresponse(200, 'message', 'Event liked successfully.');
             }
             $exist->update([
@@ -661,6 +677,19 @@ class EventController extends commonController
        if(!$eventLike){
         return $this->errorresponse(500, 'message', 'Event not liked!');
        }
+       $this->notifyEventOwner($request->event_id);
        return $this->successresponse(200, 'message', 'Event liked successfully.');
+    }
+    private function notifyEventOwner($eventId)
+    {
+        try {
+            $event = $this->eventModel::find($eventId);
+            if ($event) {
+                (new \App\Services\NotificationService($this->companyId, $this->userId))
+                    ->notifyUser($event->created_by, 'like', 'New Like', 'Someone liked your event', 'event', $event->id);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Notification failed: ' . $e->getMessage());
+        }
     }
 }

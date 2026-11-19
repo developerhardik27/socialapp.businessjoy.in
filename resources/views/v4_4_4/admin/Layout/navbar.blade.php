@@ -378,6 +378,26 @@
                         @endif
                     </div>
                     <ul class="navbar-list">
+                        <li class="nav-item mr-2">
+                            <a href="javascript:void(0)" class="search-toggle iq-waves-effect" id="notifToggle">
+                                <i class="ri-notification-3-line" style="font-size:24px;"></i>
+                                <span id="notifBadge" class="badge badge-danger" style="display:none;position:absolute;top:2px;right:0;font-size:10px;">0</span>
+                            </a>
+                            <div class="iq-sub-dropdown" id="notifDropdown" style="width:380px;right:0;left:auto;">
+                                <div class="iq-card shadow-none m-0">
+                                    <div class="iq-card-body p-0">
+                                        <div class="bg-primary p-3 d-flex justify-content-between align-items-center">
+                                            <h5 class="mb-0 text-white line-height">Notifications</h5>
+                                            <a href="javascript:void(0)" id="notifReadAll" class="text-white"
+                                                style="font-size:12px;text-decoration:underline;">Mark all read</a>
+                                        </div>
+                                        <div id="notifList" style="max-height:400px;overflow-y:auto;">
+                                            <div class="text-center p-3 text-muted">Loading...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
                         <li>
                             <a id="userimg" href="#"
                                 class="search-toggle iq-waves-effect d-flex align-items-center bg-primary rounded">
@@ -457,3 +477,115 @@
             </div>
         </div>
         <!-- TOP Nav Bar END -->
+        <script>
+            // navbar renders before jQuery (footer scripts) - wait until $ is available
+            (function() {
+                var notifInitTimer = setInterval(function() {
+                    if (window.jQuery) {
+                        clearInterval(notifInitTimer);
+                        initNotifications();
+                    }
+                }, 100);
+            })();
+
+            function initNotifications() {
+                var notifParams = {
+                    token: "{{ session()->get('api_token') }}",
+                    company_id: "{{ session()->get('company_id') }}",
+                    user_id: "{{ session()->get('user_id') }}"
+                };
+
+                function loadNotifCount() {
+                    $.ajax({
+                        type: 'GET',
+                        url: "{{ route('notifications.unreadcount') }}",
+                        data: notifParams,
+                        success: function(res) {
+                            if (res.status == 200) {
+                                var c = res.count || 0;
+                                $('#notifBadge').toggle(c > 0).text(c > 99 ? '99+' : c);
+                            }
+                        }
+                    });
+                }
+
+                function esc(s) {
+                    return $('<div>').text(s == null ? '' : s).html();
+                }
+
+                function loadNotifList() {
+                    $('#notifList').html('<div class="text-center p-3 text-muted">Loading...</div>');
+                    $.ajax({
+                        type: 'GET',
+                        url: "{{ route('notifications.index') }}",
+                        data: $.extend({}, notifParams, { per_page: 15, unread: 1 }),
+                        success: function(res) {
+                            var items = (res.status == 200 && res.data && res.data.data) ? res.data.data : [];
+                            if (!items.length) {
+                                $('#notifList').html('<div class="text-center p-3 text-muted">No notifications</div>');
+                                return;
+                            }
+                            var html = '';
+                            $.each(items, function(i, n) {
+                                var unread = (n.is_read == 0);
+                                var t = n.created_at ? String(n.created_at).replace('T', ' ').substring(0, 16) : '';
+                                html += `
+                                    <a href="javascript:void(0)" class="iq-sub-card notif-item ${unread ? 'bg-light' : ''}"
+                                        data-id="${n.id}" style="display:block;${unread ? 'border-left:3px solid #253566;' : ''}">
+                                        <div class="media align-items-center p-2">
+                                            <div class="rounded iq-card-icon iq-bg-primary" style="min-width:36px;">
+                                                <i class="ri-notification-3-line"></i>
+                                            </div>
+                                            <div class="media-body ml-2">
+                                                <h6 class="mb-0" style="font-size:13px;">${esc(n.title)} ${unread ? '<span class="badge badge-primary">New</span>' : ''}</h6>
+                                                <p class="mb-0 font-size-12 text-muted">${esc(n.body)}</p>
+                                                <small class="text-muted">${esc(n.actor_name || '')} · ${esc(t)}</small>
+                                            </div>
+                                        </div>
+                                    </a>`;
+                            });
+                            $('#notifList').html(html);
+                        },
+                        error: function() {
+                            $('#notifList').html('<div class="text-center p-3 text-muted">Failed to load</div>');
+                        }
+                    });
+                }
+
+                // refresh list + count when dropdown opens
+                $(document).on('click', '#notifToggle', function() {
+                    loadNotifList();
+                    loadNotifCount();
+                });
+
+                // mark all read
+                $(document).on('click', '#notifReadAll', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    ajaxRequest('POST', "{{ route('notifications.readall') }}", notifParams)
+                        .done(function(res) {
+                            if (res.status == 200) {
+                                loadNotifList();
+                                loadNotifCount();
+                            }
+                        });
+                });
+
+                // mark single read on click
+                $(document).on('click', '.notif-item', function(e) {
+                    e.stopPropagation();
+                    var id = $(this).data('id');
+                    var readUrl = "{{ route('notifications.read', '__id__') }}".replace('__id__', id);
+                    ajaxRequest('POST', readUrl, notifParams)
+                        .done(function(res) {
+                            if (res.status == 200) {
+                                loadNotifList();
+                                loadNotifCount();
+                            }
+                        });
+                });
+
+                loadNotifCount();
+                setInterval(loadNotifCount, 60000); // badge refresh every minute
+            }
+        </script>

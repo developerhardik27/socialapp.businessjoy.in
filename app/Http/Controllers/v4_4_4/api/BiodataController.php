@@ -104,6 +104,12 @@ class BiodataController extends commonController
             'created_by' => $this->userId,
         ]);
 
+        try {
+            (new \App\Services\NotificationService($this->companyId, $this->userId))
+                ->notifyAllUsers('biodata', 'New Biodata', 'A new biodata has been added', 'biodata', $biodata->id);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Notification failed: ' . $e->getMessage());
+        }
         return $this->successresponse(200, 'message', 'Biodata created successfully');
     }
     public function show($id)

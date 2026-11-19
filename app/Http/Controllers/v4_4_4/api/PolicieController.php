@@ -146,7 +146,13 @@ class PolicieController extends commonController
         
         if(!$policy){
             return $this->successresponse(500, 'message', 'Policy not created');
-        }   
+        }
+        try {
+            (new \App\Services\NotificationService($this->companyId, $this->userId))
+                ->notifyAllUsers('policy', 'New Policy', 'A new policy has been added', 'policy', $policy->id);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Notification failed: ' . $e->getMessage());
+        }
         return $this->successresponse(200, 'message', 'Policy created successfully');
     }
     

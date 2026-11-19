@@ -905,6 +905,16 @@ Route::middleware(['checkToken'])->group(function () {
         Route::put('/shakh/{id}', 'destroy')->name('shakh.destroy');
     });
 
+    $notificationController = getversion('NotificationController');
+    Route::controller($notificationController)->group(function () {
+        Route::post('/device/register', 'registerDevice')->name('device.register');
+        Route::post('/device/unregister', 'unregisterDevice')->name('device.unregister');
+        Route::get('/notifications', 'index')->name('notifications.index');
+        Route::get('/notifications/unread-count', 'unreadCount')->name('notifications.unreadcount');
+        Route::post('/notifications/read-all', 'markAllAsRead')->name('notifications.readall');
+        Route::post('/notifications/{id}/read', 'markAsRead')->name('notifications.read');
+    });
+
     $BiodataController = getversion('BiodataController');
     Route::controller($BiodataController)->group(function () {
         Route::get('/biodata', 'index')->name('biodata.index');

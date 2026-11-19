@@ -235,6 +235,12 @@ class PostController extends commonController
         if(!$post){
             return $this->successresponse(500, 'message', 'Failed to create post');
         }
+        try {
+            (new \App\Services\NotificationService($this->companyId, $this->userId))
+                ->notifyAllUsers('post', 'New Post', 'A new post has been added', 'post', $post->id);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Notification failed: ' . $e->getMessage());
+        }
         return $this->successresponse(200, 'message', 'Post created successfully');
     }
     
@@ -497,9 +503,18 @@ class PostController extends commonController
         if(!$postComment){
             return $this->errorresponse(500, 'message', 'Post comment not created!');
         }
+        try {
+            $post = $this->postModel::find($request->post_id);
+            if ($post) {
+                (new \App\Services\NotificationService($this->companyId, $this->userId))
+                    ->notifyUser($post->created_by, 'comment', 'New Comment', 'Someone commented on your post', 'post', $post->id);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Notification failed: ' . $e->getMessage());
+        }
         return $this->successresponse(200, 'message', 'Post comment created successfully');
     }
-    
+
     public function updatePostComment(Request $request, $id)
     {
         if ($this->rp['societymodule']['postcomment']['edit'] != 1) {
@@ -578,6 +593,7 @@ class PostController extends commonController
                     'is_deleted' => 0,
                     'updated_by' => $this->userId,
                 ]);
+                $this->notifyPostOwner($request->post_id);
                 return $this->successresponse(200, 'message', 'Post liked successfully.');
             }
             $exist->update([
@@ -596,7 +612,20 @@ class PostController extends commonController
        if(!$postLike){
         return $this->errorresponse(500, 'message', 'Post not liked!');
        }
+       $this->notifyPostOwner($request->post_id);
        return $this->successresponse(200, 'message', 'Post liked successfully.');
+    }
+    private function notifyPostOwner($postId)
+    {
+        try {
+            $post = $this->postModel::find($postId);
+            if ($post) {
+                (new \App\Services\NotificationService($this->companyId, $this->userId))
+                    ->notifyUser($post->created_by, 'like', 'New Like', 'Someone liked your post', 'post', $post->id);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Notification failed: ' . $e->getMessage());
+        }
     }
     public function postComments($id)
     {
