@@ -37,10 +37,10 @@
                     <span class="error-msg" id="error-familyPersonId" style="color: red"></span>
                 </div>
                 <div class="col-sm-6 mb-2">
-                    <label class="form-label" for="image">Image:</label>
+                    <label class="form-label" for="image">Image/PDF:</label>
                     <input type="file" class="form-control" name="image" id="image"
-                        accept="image/jpeg,image/jpg,image/png" />
-                    <small class="text-muted">jpg, jpeg, png</small>
+                        accept="image/jpeg,image/jpg,image/png,application/pdf" />
+                    <small class="text-muted">jpg, jpeg, png, PDF</small>
                     <div id="existingImage" class="mt-2"></div>
                 </div>
                 <div class="col-sm-12 mb-2">

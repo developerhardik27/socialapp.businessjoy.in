@@ -214,7 +214,7 @@ class DonorController extends commonController
     }
     public function persons(Request $request)
     {
-        $persons = $this->familyPersonModel::where('is_deleted', 0)->get();
+        $persons = $this->familyPersonModel::with('shakhMaster')->where('is_deleted', 0)->get();
 
         $userImages = User::whereIn('family_person_id', $persons->pluck('id'))
             ->where('is_deleted', 0)

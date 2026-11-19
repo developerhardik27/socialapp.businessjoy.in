@@ -47,7 +47,9 @@
                 </div>
                 <div class="col-sm-4 mb-2">
                     <label class="form-label">Shakh:</label>
-                    <input type="text" class="form-control" name="shakh" id="shakh" placeholder="Shakh" />
+                    <select class="form-control" name="shakh_id" id="shakh_id">
+                        <option value="" disabled selected>Select Shakh</option>
+                    </select>
                 </div>
 
                 <div class="col-sm-12">
@@ -233,6 +235,60 @@
                 </div>
 
                 <div class="col-sm-12">
+                    <div class="person-section-title">Work &amp; Education Details</div>
+                </div>
+                <div class="col-sm-4 mb-2">
+                    <label class="form-label">Work Type:</label>
+                    <select class="form-control" name="work_type" id="work_type">
+                        <option value="" disabled selected>Select Work Type</option>
+                        <option value="job">Job</option>
+                        <option value="business">Business</option>
+                        <option value="homemaker">Homemaker</option>
+                        <option value="retired">Retired</option>
+                        <option value="student">Student</option>
+                        <option value="none">None</option>
+                    </select>
+                </div>
+                <div class="col-sm-4 mb-2" id="retired_title_wrap" style="display:none;">
+                    <label class="form-label">Retired Title:</label>
+                    <input type="text" class="form-control" name="retired_title" id="retired_title"
+                        placeholder="Previous Work Title" />
+                </div>
+                <div class="col-sm-4 mb-2" id="retired_description_wrap" style="display:none;">
+                    <label class="form-label">Retired Description:</label>
+                    <input type="text" class="form-control" name="retired_description" id="retired_description"
+                        placeholder="Previous Work Description" />
+                </div>
+                <div class="col-sm-4 mb-2" id="study_level_wrap" style="display:none;">
+                    <label class="form-label">Study Level:</label>
+                    <select class="form-control" name="study_level" id="study_level">
+                        <option value="" disabled selected>Select Level</option>
+                        <option value="school">School</option>
+                        <option value="college">College</option>
+                    </select>
+                </div>
+                <div class="col-sm-4 mb-2" id="study_institute_wrap" style="display:none;">
+                    <label class="form-label">Institute:</label>
+                    <input type="text" class="form-control" name="study_institute" id="study_institute"
+                        placeholder="School / College Name" />
+                </div>
+                <div class="col-sm-4 mb-2" id="study_course_wrap" style="display:none;">
+                    <label class="form-label">Course:</label>
+                    <input type="text" class="form-control" name="study_course" id="study_course"
+                        placeholder="Standard / Course / Field" />
+                </div>
+                <div class="col-sm-4 mb-2" id="study_year_wrap" style="display:none;">
+                    <label class="form-label">Year / Semester:</label>
+                    <input type="text" class="form-control" name="study_year" id="study_year"
+                        placeholder="e.g. Second Year" />
+                </div>
+                <div class="col-sm-4 mb-2">
+                    <label class="form-label">Education:</label>
+                    <input type="text" class="form-control" name="education" id="education"
+                        placeholder="Highest Education" />
+                </div>
+
+                <div class="col-sm-12">
                     <button type="reset" id="resetbtn" data-toggle="tooltip" data-placement="bottom"
                         data-original-title="Cancel" class="btn iq-bg-danger float-right">Cancel</button>
                     <button type="submit" data-toggle="tooltip" data-placement="bottom"
@@ -356,6 +412,12 @@
             $('#business_category').on('change', function() {
                 loadSubcategories($(this).val(), $('#business_subcategory'), '');
             });
+            $('#work_type').on('change', function() {
+                var v = $(this).val();
+                $('#retired_title_wrap, #retired_description_wrap').toggle(v === 'retired');
+                $('#study_level_wrap, #study_institute_wrap, #study_course_wrap, #study_year_wrap')
+                    .toggle(v === 'student');
+            });
 
             // load static dropdowns
             function loadCountries() {
@@ -386,6 +448,24 @@
                         if (response.status == 200 && response.relations) {
                             fillSelect($('#relationship_id'), response.relations, 'id', 'relation',
                                 'Select Relation');
+                        }
+                    }
+                });
+            }
+
+            function loadShakhs() {
+                return $.ajax({
+                    type: 'GET',
+                    url: "{{ route('shakh.index') }}",
+                    data: {
+                        token: "{{ session()->get('api_token') }}",
+                        company_id: "{{ session()->get('company_id') }}",
+                        user_id: "{{ session()->get('user_id') }}"
+                    },
+                    success: function(response) {
+                        if (response.status == 200 && response.data) {
+                            fillSelect($('#shakh_id'), response.data, 'id', 'name',
+                                'Select Shakh');
                         }
                     }
                 });
@@ -458,7 +538,15 @@
                             $('#family_person_id').val(memberData.family_person_id);
                             $('#lifetime_member_no').val(memberData.lifetime_member_no);
                             $('#receipt_number').val(memberData.receipt_number);
-                            $('#shakh').val(memberData.shakh);
+                            $('#shakh_id').val(memberData.shakh_id);
+                            $('#work_type').val(memberData.work_type).trigger('change');
+                            $('#retired_title').val(memberData.retired_title);
+                            $('#retired_description').val(memberData.retired_description);
+                            $('#study_level').val(memberData.study_level);
+                            $('#study_institute').val(memberData.study_institute);
+                            $('#study_course').val(memberData.study_course);
+                            $('#study_year').val(memberData.study_year);
+                            $('#education').val(memberData.education);
                             $('#first_name').val(memberData.first_name);
                             $('#last_name').val(memberData.last_name);
                             $('#surname').val(memberData.surname);
@@ -519,7 +607,7 @@
             }
 
             loadershow();
-            $.when(loadCountries(), loadRelations(), loadBusinessCategories(), resolveMemberId())
+            $.when(loadCountries(), loadRelations(), loadBusinessCategories(), loadShakhs(), resolveMemberId())
                 .always(function() {
                     loaddata();
                 });
@@ -535,7 +623,7 @@
                 var intDateFields = ['dob', 'age', 'address_country_id', 'address_state_id',
                     'address_city_id', 'address_pincode', 'company_country_id',
                     'company_state_id', 'company_city_id', 'company_pincode',
-                    'business_category', 'business_subcategory', 'relationship_id'
+                    'business_category', 'business_subcategory', 'relationship_id', 'shakh_id'
                 ];
                 var emptied = [];
                 $(this).find('input,select,textarea').each(function() {

@@ -53,6 +53,10 @@ class karobarimemberController extends commonController
             return $this->successresponse(500, 'message', 'You are Unauthorized');
         }
         $members = $this->karobarimemberModel::leftJoin('family_person', 'kraobari_member.familyPersonId', '=', 'family_person.id')
+        ->leftJoin('shakh', function ($join) {
+            $join->on('shakh.id', '=', 'family_person.shakh_id')
+                ->where('shakh.is_deleted', 0);
+        })
         ->leftJoin('business_sub_category as bsc', 'bsc.id', '=', 'family_person.business_subcategory')
         ->leftJoin('business_category as bc', 'bc.id', '=', 'family_person.business_category')    
         ->leftJoin($this->masterdbname.'.country as company_country', 'company_country.id', '=', 'family_person.company_country_id')
@@ -70,7 +74,7 @@ class karobarimemberController extends commonController
             ->where('kraobari_member.is_deleted', 0)
             ->where('family_person.is_deleted', 0)
             
-            ->select('kraobari_member.*', 'family_person.*','fp_user.img','bsc.name as business_subcategory_name',
+            ->select('kraobari_member.*', 'family_person.*','fp_user.img','shakh.name as shakh_name','bsc.name as business_subcategory_name',
             'bc.name as business_category_name',
 
             'company_country.country_name as company_country_name',
@@ -86,6 +90,8 @@ class karobarimemberController extends commonController
             }
             $members = $members->get()->each(function ($member) {
                 $member->image_url = $member->img ? url('uploads/' . $member->img) : null;
+                $member->shakh = $member->shakh_name ?? $member->shakh;
+                unset($member->shakh_name);
             });
             if ($members->isEmpty()) {
             return DataTables::of($members)
@@ -197,6 +203,10 @@ class karobarimemberController extends commonController
         // Step 3: Fetch ALL family persons from eligible families
         $members = $this->familyPersonModel
             ::leftJoin('members', 'members.family_person_id', '=', 'family_person.id')
+            ->leftJoin('shakh', function ($join) {
+                $join->on('shakh.id', '=', 'family_person.shakh_id')
+                    ->where('shakh.is_deleted', 0);
+            })
             ->leftJoin('business_sub_category as bsc', 'bsc.id', '=', 'family_person.business_subcategory')
             ->leftJoin('business_category as bc', 'bc.id', '=', 'family_person.business_category')
             ->leftJoin($this->masterdbname . '.country as company_country', 'company_country.id', '=', 'family_person.company_country_id')
@@ -214,6 +224,7 @@ class karobarimemberController extends commonController
             ->select(
                 'family_person.*',
                 'fp_user.img',
+                'shakh.name as shakh_name',
                 'members.id as member_id',
                 'members.lifetime_member_no',
                 'members.receipt_number',
@@ -232,6 +243,8 @@ class karobarimemberController extends commonController
             ->get()
             ->each(function ($member) {
                 $member->image_url = $member->img ? url('uploads/' . $member->img) : null;
+                $member->shakh = $member->shakh_name ?? $member->shakh;
+                unset($member->shakh_name);
             });
 
         if ($members->isEmpty()) {

@@ -74,6 +74,7 @@
             var countries = [];
             var relations = [];
             var businessCategories = [];
+            var shakhs = [];
 
             // redirect on family page
             $('#resetbtn').on('click', function() {
@@ -123,6 +124,23 @@
                     success: function(response) {
                         if (response.status == 200 && response.businesscategories) {
                             businessCategories = response.businesscategories;
+                        }
+                    }
+                });
+            }
+
+            function loadShakhs() {
+                return $.ajax({
+                    type: 'GET',
+                    url: "{{ route('shakh.index') }}",
+                    data: {
+                        token: "{{ session()->get('api_token') }}",
+                        company_id: "{{ session()->get('company_id') }}",
+                        user_id: "{{ session()->get('user_id') }}"
+                    },
+                    success: function(response) {
+                        if (response.status == 200 && response.data) {
+                            shakhs = response.data;
                         }
                     }
                 });
@@ -284,7 +302,9 @@
                         </div>
                         <div class="col-sm-4 mb-2">
                             <label class="form-label">Shakh:</label>
-                            <input type="text" class="form-control f-shakh" name="famliypersons[${i}][shakh]" placeholder="Shakh" />
+                            <select class="form-control shakh-select" name="famliypersons[${i}][shakh_id]">
+                                <option value="" disabled selected>Select Shakh</option>
+                            </select>
                         </div>
                         <div class="col-sm-4 mb-2 d-flex align-items-end">
                             <div class="custom-control custom-checkbox">
@@ -409,6 +429,54 @@
                             <input type="text" class="form-control f-seo_keywords" name="famliypersons[${i}][seo_keywords]" placeholder="SEO Keywords" />
                         </div>
                     </div>
+
+                    <div class="person-section-title">Work &amp; Education Details</div>
+                    <div class="form-row">
+                        <div class="col-sm-4 mb-2">
+                            <label class="form-label">Work Type:</label>
+                            <select class="form-control f-work_type work-type-select" name="famliypersons[${i}][work_type]">
+                                <option value="" disabled selected>Select Work Type</option>
+                                <option value="job">Job</option>
+                                <option value="business">Business</option>
+                                <option value="homemaker">Homemaker</option>
+                                <option value="retired">Retired</option>
+                                <option value="student">Student</option>
+                                <option value="none">None</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-4 mb-2 retired-fields" style="display:none;">
+                            <label class="form-label">Retired Title:</label>
+                            <input type="text" class="form-control f-retired_title" name="famliypersons[${i}][retired_title]" placeholder="Previous Work Title" />
+                        </div>
+                        <div class="col-sm-4 mb-2 retired-fields" style="display:none;">
+                            <label class="form-label">Retired Description:</label>
+                            <input type="text" class="form-control f-retired_description" name="famliypersons[${i}][retired_description]" placeholder="Previous Work Description" />
+                        </div>
+                        <div class="col-sm-4 mb-2 study-fields" style="display:none;">
+                            <label class="form-label">Study Level:</label>
+                            <select class="form-control f-study_level" name="famliypersons[${i}][study_level]">
+                                <option value="" disabled selected>Select Level</option>
+                                <option value="school">School</option>
+                                <option value="college">College</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-4 mb-2 study-fields" style="display:none;">
+                            <label class="form-label">Institute:</label>
+                            <input type="text" class="form-control f-study_institute" name="famliypersons[${i}][study_institute]" placeholder="School / College Name" />
+                        </div>
+                        <div class="col-sm-4 mb-2 study-fields" style="display:none;">
+                            <label class="form-label">Course:</label>
+                            <input type="text" class="form-control f-study_course" name="famliypersons[${i}][study_course]" placeholder="Standard / Course / Field" />
+                        </div>
+                        <div class="col-sm-4 mb-2 study-fields" style="display:none;">
+                            <label class="form-label">Year / Semester:</label>
+                            <input type="text" class="form-control f-study_year" name="famliypersons[${i}][study_year]" placeholder="e.g. Second Year" />
+                        </div>
+                        <div class="col-sm-4 mb-2">
+                            <label class="form-label">Education:</label>
+                            <input type="text" class="form-control f-education" name="famliypersons[${i}][education]" placeholder="Highest Education" />
+                        </div>
+                    </div>
                 </div>`;
             }
 
@@ -417,6 +485,13 @@
                 fillSelect(card.find('.company-country-select'), countries, 'id', 'country_name', 'Select Country');
                 fillSelect(card.find('.relation-select'), relations, 'id', 'relation', 'Select Relation');
                 fillSelect(card.find('.business-category-select'), businessCategories, 'id', 'name', 'Select Category');
+                fillSelect(card.find('.shakh-select'), shakhs, 'id', 'name', 'Select Shakh');
+
+                card.find('.work-type-select').on('change', function() {
+                    var cardEl = $(this).closest('.person-card');
+                    cardEl.find('.retired-fields').toggle($(this).val() === 'retired');
+                    cardEl.find('.study-fields').toggle($(this).val() === 'student');
+                });
 
                 card.find('.address-country-select').on('change', function() {
                     loadStates($(this).val(), card.find('.address-state-select'), '', card.find(
@@ -454,7 +529,15 @@
                     card.find('.f-email').val(person.email);
                     card.find('.f-mobile').val(person.mobile);
                     card.find('.relation-select').val(person.relationship_id);
-                    card.find('.f-shakh').val(person.shakh);
+                    card.find('.shakh-select').val(person.shakh_id);
+                    card.find('.f-work_type').val(person.work_type).trigger('change');
+                    card.find('.f-retired_title').val(person.retired_title);
+                    card.find('.f-retired_description').val(person.retired_description);
+                    card.find('.f-study_level').val(person.study_level);
+                    card.find('.f-study_institute').val(person.study_institute);
+                    card.find('.f-study_course').val(person.study_course);
+                    card.find('.f-study_year').val(person.study_year);
+                    card.find('.f-education').val(person.education);
                     card.find('.f-address_house_no_building_name').val(person
                         .address_house_no_building_name);
                     card.find('.f-address_landmark').val(person.address_landmark);
@@ -538,7 +621,7 @@
 
             // init: load dropdowns + existing family data
             loadershow();
-            $.when(loadCountries(), loadRelations(), loadBusinessCategories()).always(function() {
+            $.when(loadCountries(), loadRelations(), loadBusinessCategories(), loadShakhs()).always(function() {
                 let familyEditUrl = "{{ route('family.edit', '__editId__') }}".replace('__editId__',
                     edit_id);
                 $.ajax({
@@ -594,7 +677,7 @@
                 var intDateFields = ['dob', 'age', 'address_country_id', 'address_state_id',
                     'address_city_id', 'address_pincode', 'company_country_id',
                     'company_state_id', 'company_city_id', 'company_pincode',
-                    'business_category', 'business_subcategory', 'relationship_id'
+                    'business_category', 'business_subcategory', 'relationship_id', 'shakh_id'
                 ];
                 var emptied = [];
                 $(this).find('input,select,textarea').each(function() {

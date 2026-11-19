@@ -171,7 +171,7 @@ class JobController extends commonController
         $validator = Validator::make($request->all(),[
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'image' => 'nullable|file|mimes:jpg,jpeg,png',
+            'image' => 'nullable|file|mimes:jpg,jpeg,png,pdf',
             'type' => 'required|string', // hiring or looking
             'company_name' => 'nullable|string',
             'salary_from' => 'nullable|integer',
@@ -315,7 +315,7 @@ class JobController extends commonController
         $validator = Validator::make($request->all(),[
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'image' => 'nullable|file|mimes:jpg,jpeg,png',
+            'image' => 'nullable|file|mimes:jpg,jpeg,png,pdf',
             'type' => 'required|string',
             'company_name' => 'nullable|string',
             'salary_from' => 'nullable|integer',

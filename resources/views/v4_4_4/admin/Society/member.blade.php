@@ -258,6 +258,13 @@
                                 '-',
                             'Services': memberdetail.services || '-',
                             'Shakh': memberdetail.shakh || '-',
+                            'Work Type': memberdetail.work_type || '-',
+                            'Retired Title': memberdetail.retired_title || '-',
+                            'Study Level': memberdetail.study_level || '-',
+                            'Institute': memberdetail.study_institute || '-',
+                            'Course': memberdetail.study_course || '-',
+                            'Year / Semester': memberdetail.study_year || '-',
+                            'Education': memberdetail.education || '-',
                             'Created On': (memberdetail.created_at || '-').split('T')[0]
                         };
                         $.each(fields, function(label, value) {

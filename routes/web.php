@@ -487,6 +487,11 @@ Route::group(['middleware' => ['CheckSession']], function () {
                 Route::get('/society/AddNewFamilyRelation', 'familyrelationcreate')->name('admin.addsocietyfamilyrelation')->middleware('checkPermission:societymodule,familyrelation,add');
                 Route::get('/society/EditFamilyRelation/{id}', 'familyrelationedit')->name('admin.editsocietyfamilyrelation')->middleware('checkPermission:societymodule,familyrelation,edit');
 
+                // shakh route
+                Route::get('/society/Shakh', 'shakh')->name('admin.societyshakh')->middleware('checkPermission:societymodule,familymembers,show');
+                Route::get('/society/AddNewShakh', 'shakhcreate')->name('admin.addsocietyshakh')->middleware('checkPermission:societymodule,familymembers,add');
+                Route::get('/society/EditShakh/{id}', 'shakhedit')->name('admin.editsocietyshakh')->middleware('checkPermission:societymodule,familymembers,edit');
+
                 // business category route
                 Route::get('/society/BusinessCategory', 'businesscategory')->name('admin.societybusinesscategory')->middleware('checkPermission:societymodule,businesscategory,show');
                 Route::get('/society/AddNewBusinessCategory', 'businesscategorycreate')->name('admin.addsocietybusinesscategory')->middleware('checkPermission:societymodule,businesscategory,add');

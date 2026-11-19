@@ -841,6 +841,12 @@
                                         <span>Biodata</span>
                                     </a>
                                 </li>
+                                <li class="{{ request()->routeIs('admin.societyshakh') ? 'active' : '' }}">
+                                    <a href="{{ route('admin.societyshakh') }}" class="iq-waves-effect">
+                                        <i class="ri-git-branch-line"></i>
+                                        <span>Shakh</span>
+                                    </a>
+                                </li>
                             @endif
                             @if (session('user_permissions.societymodule.member.show') == '1')
                                 <li class="{{ request()->routeIs('admin.societymember') ? 'active' : '' }}">

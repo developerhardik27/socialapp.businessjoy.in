@@ -41,21 +41,29 @@ class MemberController extends commonController
         $this->businesscategoryModel = $this->getmodel('BusinessCategory');
         $this->businesssubcategoryModel = $this->getmodel('BusinessSubCategory');
         $this->biodataModel = $this->getmodel('Biodata');
+        $this->shakhModel = $this->getmodel('Shakh');
     }
-    public function index(Request $request)
+    // attach the shakh master name onto a member row (falls back to stored text)
+    private function resolveMemberShakh($member)
     {
-        if ($this->rp['societymodule']['member']['view'] != 1) {
-            return $this->successresponse(500, 'message', 'You are Unauthorized');
-        }
-        $members = $this->memberModel::leftJoin('family_person', 'members.family_person_id', '=', 'family_person.id')
-        ->leftJoin('business_sub_category as bsc', 'bsc.id', '=', 'family_person.business_subcategory')
-        ->leftJoin('business_category as bc', 'bc.id', '=', 'family_person.business_category')    
-        ->leftJoin($this->masterdbname.'.country as company_country', 'company_country.id', '=', 'family_person.company_country_id')
+        $member->shakh = $member->shakh_name ?? $member->shakh;
+        unset($member->shakh_name);
+        return $member;
+    }
+    // shared joins used by index/show/edit to expose family_person + shakh data
+    private function memberBaseQuery()
+    {
+        return $this->memberModel::leftJoin('family_person', 'members.family_person_id', '=', 'family_person.id')
+            ->leftJoin('shakh', function ($join) {
+                $join->on('shakh.id', '=', 'family_person.shakh_id')
+                    ->where('shakh.is_deleted', 0);
+            })
+            ->leftJoin('business_sub_category as bsc', 'bsc.id', '=', 'family_person.business_subcategory')
+            ->leftJoin('business_category as bc', 'bc.id', '=', 'family_person.business_category')
+            ->leftJoin($this->masterdbname.'.country as company_country', 'company_country.id', '=', 'family_person.company_country_id')
             ->leftJoin($this->masterdbname.'.country as address_country', 'address_country.id', '=', 'family_person.address_country_id')
-
             ->leftJoin($this->masterdbname.'.state as company_state', 'company_state.id', '=', 'family_person.company_state_id')
             ->leftJoin($this->masterdbname.'.state as address_state', 'address_state.id', '=', 'family_person.address_state_id')
-
             ->leftJoin($this->masterdbname.'.city as company_city', 'company_city.id', '=', 'family_person.company_city_id')
             ->leftJoin($this->masterdbname.'.city as address_city', 'address_city.id', '=', 'family_person.address_city_id')
             ->leftJoin($this->masterdbname.'.users as fp_user', function ($join) {
@@ -63,24 +71,35 @@ class MemberController extends commonController
                     ->where('fp_user.is_deleted', 0);
             })
             ->where('members.is_deleted', 0)
-            ->where('family_person.is_deleted', 0)
-            
-            ->select('members.*', 'family_person.*','fp_user.img','bsc.name as business_subcategory_name',
+            ->where('family_person.is_deleted', 0);
+    }
+    private function memberSelects()
+    {
+        return [
+            'members.*', 'family_person.*', 'fp_user.img', 'shakh.name as shakh_name',
+            'bsc.name as business_subcategory_name',
             'bc.name as business_category_name',
-
             'company_country.country_name as company_country_name',
             'address_country.country_name as address_country_name',
-
             'company_state.state_name as company_state_name',
             'address_state.state_name as address_state_name',
-
             'company_city.city_name as company_city_name',
-            'address_city.city_name as address_city_name');
+            'address_city.city_name as address_city_name',
+        ];
+    }
+    public function index(Request $request)
+    {
+        if ($this->rp['societymodule']['member']['view'] != 1) {
+            return $this->successresponse(500, 'message', 'You are Unauthorized');
+        }
+        $members = $this->memberBaseQuery()
+            ->select($this->memberSelects());
              if ($this->rp['societymodule']['member']['alldata'] != 1) {
                 $members = $members->where('members.created_by', $this->userId);
             }
             $members = $members->get()->each(function ($member) {
                 $member->image_url = $member->img ? url('uploads/' . $member->img) : null;
+                $this->resolveMemberShakh($member);
             });
             if ($members->isEmpty()) {
             return DataTables::of($members)
@@ -101,37 +120,12 @@ class MemberController extends commonController
         if ($this->rp['societymodule']['member']['view'] != 1) {
             return $this->successresponse(500, 'message', 'You are Unauthorized');
         }
-        $members = $this->memberModel::leftJoin('family_person', 'members.family_person_id', '=', 'family_person.id')
-        ->leftJoin('business_sub_category as bsc', 'bsc.id', '=', 'family_person.business_subcategory')
-        ->leftJoin('business_category as bc', 'bc.id', '=', 'family_person.business_category')    
-        ->leftJoin($this->masterdbname.'.country as company_country', 'company_country.id', '=', 'family_person.company_country_id')
-            ->leftJoin($this->masterdbname.'.country as address_country', 'address_country.id', '=', 'family_person.address_country_id')
-
-            ->leftJoin($this->masterdbname.'.state as company_state', 'company_state.id', '=', 'family_person.company_state_id')
-            ->leftJoin($this->masterdbname.'.state as address_state', 'address_state.id', '=', 'family_person.address_state_id')
-
-            ->leftJoin($this->masterdbname.'.city as company_city', 'company_city.id', '=', 'family_person.company_city_id')
-            ->leftJoin($this->masterdbname.'.city as address_city', 'address_city.id', '=', 'family_person.address_city_id')
-            ->leftJoin($this->masterdbname.'.users as fp_user', function ($join) {
-                $join->on('fp_user.family_person_id', '=', 'family_person.id')
-                    ->where('fp_user.is_deleted', 0);
-            })
-            ->where('members.is_deleted', 0)
-            ->where('family_person.is_deleted', 0)
-            
-            ->select('members.*', 'family_person.*','fp_user.img','bsc.name as business_subcategory_name',
-            'bc.name as business_category_name',
-
-            'company_country.country_name as company_country_name',
-            'address_country.country_name as address_country_name',
-
-            'company_state.state_name as company_state_name',
-            'address_state.state_name as address_state_name',
-
-            'company_city.city_name as company_city_name',
-            'address_city.city_name as address_city_name')->where('members.id', $id)->get()
+        $members = $this->memberBaseQuery()
+            ->select($this->memberSelects())
+            ->where('members.id', $id)->get()
             ->each(function ($member) {
                 $member->image_url = $member->img ? url('uploads/' . $member->img) : null;
+                $this->resolveMemberShakh($member);
             });
             if ($members->isEmpty()) {
                 return $this->successresponse(404, 'message', 'No Data Found');
@@ -143,20 +137,14 @@ class MemberController extends commonController
         if ($this->rp['societymodule']['member']['view'] != 1) {
             return $this->successresponse(500, 'message', 'You are Unauthorized');
         }
-        $members = $this->memberModel::leftJoin('family_person', 'members.family_person_id', '=', 'family_person.id')
-        ->leftJoin($this->masterdbname.'.users as fp_user', function ($join) {
-            $join->on('fp_user.family_person_id', '=', 'family_person.id')
-                ->where('fp_user.is_deleted', 0);
-        })
-        ->where('members.is_deleted', 0)
-            ->where('family_person.is_deleted', 0)
-            
-            ->select('members.*', 'family_person.*', 'fp_user.img')
+        $members = $this->memberBaseQuery()
+            ->select('members.*', 'family_person.*', 'shakh.name as shakh_name', 'fp_user.img')
             ->where('members.id', $id)->first();
             if (!$members) {
                 return $this->successresponse(404, 'message', 'No Data Found');
             }
         $members->image_url = $members->img ? url('uploads/' . $members->img) : null;
+        $this->resolveMemberShakh($members);
         return $this->successresponse(200, 'data', $members);
     }
     public function update(Request $request,$id)
@@ -211,6 +199,18 @@ class MemberController extends commonController
                 'updated_by'                       => $this->userId,
             ];
 
+            // new optional fields: keep existing values when not supplied
+            foreach (['work_type', 'retired_title', 'retired_description', 'study_level',
+                      'study_institute', 'study_course', 'study_year', 'education'] as $field) {
+                if ($request->has($field)) {
+                    $personData[$field] = $this->blankToNull($request->$field);
+                }
+            }
+            if ($request->has('shakh_id')) {
+                $personData['shakh_id'] = $this->blankToNull($request->shakh_id);
+            }
+            $personData = $this->resolveMemberShakhInput($request, $personData);
+
             $familyperson = $this->familyPersonModel::find($request->family_person_id);
 
             if ($familyperson) {
@@ -250,5 +250,57 @@ class MemberController extends commonController
             return $this->successresponse(400, 'message', 'Member not updated');
         }
         return $this->successresponse(200, 'message', 'Member updated successfully');
+    }
+    private function blankToNull($value)
+    {
+        if (is_string($value)) {
+            $value = trim($value);
+        }
+        return ($value === '' || $value === null) ? null : $value;
+    }
+    /**
+     * Resolve shakh_id / legacy shakh text for member update.
+     * - shakh_id present in request: valid master id wins and syncs the
+     *   `shakh` text column; invalid id clears the link and keeps the text.
+     * - only shakh text present: links the case-insensitive master match.
+     * - neither present: existing shakh_id is preserved.
+     */
+    private function resolveMemberShakhInput(Request $request, array $personData)
+    {
+        $hasId   = $request->has('shakh_id');
+        $hasText = $request->has('shakh');
+        if (!$hasId && !$hasText) {
+            unset($personData['shakh']);
+            return $personData;
+        }
+        if ($hasId) {
+            $shakhId = $this->blankToNull($request->shakh_id);
+            $personData['shakh_id'] = null;
+            if ($shakhId !== null) {
+                $shakh = $this->shakhModel::where('id', $shakhId)->where('is_deleted', 0)->first();
+                if ($shakh) {
+                    $personData['shakh_id'] = $shakh->id;
+                    $personData['shakh'] = $shakh->name;
+                } else {
+                    $personData['shakh'] = $this->blankToNull($request->shakh ?? null);
+                }
+            } else {
+                $personData['shakh'] = $this->blankToNull($request->shakh ?? null);
+            }
+            return $personData;
+        }
+        $text = $this->blankToNull($request->shakh ?? null);
+        $personData['shakh'] = $text;
+        $personData['shakh_id'] = null;
+        if ($text !== null) {
+            $match = $this->shakhModel::where('is_deleted', 0)
+                ->whereRaw('LOWER(TRIM(name)) = ?', [mb_strtolower(trim($text))])
+                ->first();
+            if ($match) {
+                $personData['shakh_id'] = $match->id;
+                $personData['shakh'] = $match->name;
+            }
+        }
+        return $personData;
     }
 }

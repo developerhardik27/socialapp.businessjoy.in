@@ -450,7 +450,7 @@
                         'Posted By': job.family_person_name || '-',
                         'Total Likes': job.total_likes || 0,
                         'Total Comments': job.total_comments || 0,
-                        'Image': imageLink,
+                        'Image/PDF': imageLink,
                         'Created On': (job.created_at || '-').split('T')[0]
                     };
                     $.each(fields, function(label, value) {

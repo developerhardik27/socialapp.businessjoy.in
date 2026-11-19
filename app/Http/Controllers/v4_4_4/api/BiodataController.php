@@ -184,7 +184,7 @@ class BiodataController extends commonController
     // this for create biodata
     public function getFamilyPersonId(Request $request)
     {
-        $familyPerson = $this->familyPersonModel::rightJoin('biodata', 'family_person.id', '!=', 'biodata.familyPersonId')->where('biodata.is_deleted', 0)->where('family_person.is_deleted', 0)->get();
+        $familyPerson = $this->familyPersonModel::with('shakhMaster')->rightJoin('biodata', 'family_person.id', '!=', 'biodata.familyPersonId')->where('biodata.is_deleted', 0)->where('family_person.is_deleted', 0)->get();
         if ($familyPerson->isEmpty()) {
             return $this->successresponse(500, 'message', 'Family person not found');
         }
@@ -194,7 +194,7 @@ class BiodataController extends commonController
     // this for edit biodata
     public function getFamilyPersonIdForEdit(Request $request)
     {
-        $familyPerson = $this->familyPersonModel::leftJoin('biodata', 'family_person.id', '=', 'biodata.familyPersonId')->where('biodata.is_deleted', 0)->where('family_person.is_deleted', 0)->get();
+        $familyPerson = $this->familyPersonModel::with('shakhMaster')->leftJoin('biodata', 'family_person.id', '=', 'biodata.familyPersonId')->where('biodata.is_deleted', 0)->where('family_person.is_deleted', 0)->get();
         if ($familyPerson->isEmpty()) {
             return $this->successresponse(500, 'message', 'Family person not found');
         }

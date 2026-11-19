@@ -896,6 +896,15 @@ Route::middleware(['checkToken'])->group(function () {
         Route::put('/deleteaccount', 'deleteaccount')->name('user.deleteaccount');
     });
 
+    $shakhController = getversion('ShakhController');
+    Route::controller($shakhController)->group(function () {
+        Route::get('/shakh', 'index')->name('shakh.index');
+        Route::get('/shakh/{id}', 'show')->name('shakh.show');
+        Route::post('/shakh/add', 'store')->name('shakh.store');
+        Route::put('/shakh/{id}', 'update')->name('shakh.update');
+        Route::put('/shakh/{id}', 'destroy')->name('shakh.destroy');
+    });
+
     $BiodataController = getversion('BiodataController');
     Route::controller($BiodataController)->group(function () {
         Route::get('/biodata', 'index')->name('biodata.index');

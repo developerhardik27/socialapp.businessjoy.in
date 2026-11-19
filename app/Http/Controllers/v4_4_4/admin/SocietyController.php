@@ -31,6 +31,22 @@ class SocietyController extends Controller
         return view($this->version . '.admin.Society.familyrelationupdateform', ['company_id' => Session::get('company_id'), 'edit_id' => $id]);
     }
 
+    // ---------------- Shakh ----------------
+    public function shakh()
+    {
+        return view($this->version . '.admin.Society.shakh');
+    }
+
+    public function shakhcreate()
+    {
+        return view($this->version . '.admin.Society.shakhform', ['company_id' => Session::get('company_id')]);
+    }
+
+    public function shakhedit(string $id)
+    {
+        return view($this->version . '.admin.Society.shakhupdateform', ['company_id' => Session::get('company_id'), 'edit_id' => $id]);
+    }
+
     // ---------------- Business Category ----------------
     public function businesscategory()
     {

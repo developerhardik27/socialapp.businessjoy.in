@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Hash;
 
 class FamilyPersonController extends commonController
 {
-    public $userId, $companyId, $masterdbname, $rp, $familyrelationModel, $familyModel, $familyPersonModel, $businesscategoryModel, $businesssubcategoryModel, $data_formateModel,$user_permissionModel,$karobarimemberModel;
+    public $userId, $companyId, $masterdbname, $rp, $familyrelationModel, $familyModel, $familyPersonModel, $businesscategoryModel, $businesssubcategoryModel, $data_formateModel,$user_permissionModel,$karobarimemberModel,$shakhModel;
     public function __construct(Request $request)
     {
 
@@ -42,7 +42,8 @@ class FamilyPersonController extends commonController
         $this->businesssubcategoryModel = $this->getmodel('BusinessSubCategory');
         $this->user_permissionModel = $this->getmodel('user_permission');
          $this->karobarimemberModel = $this->getmodel('karobarimember');
-       
+         $this->shakhModel = $this->getmodel('Shakh');
+
     }
     // family index with all family persons and user details
     public function familyIndex(Request $request)
@@ -79,7 +80,8 @@ class FamilyPersonController extends commonController
         $family->map(function ($item) use ($userImages) {
             $ids = json_decode($item->familyPersonIds, true) ?? [];
 
-            $item->family_persons = $this->familyPersonModel::whereIn('id', $ids)->get()
+            $item->family_persons = $this->familyPersonModel::with('shakhMaster')
+                ->whereIn('id', $ids)->get()
                 ->each(function ($person) use ($userImages) {
                     $this->attachUserImage($person, $userImages[$person->id] ?? null);
                 });
@@ -327,6 +329,82 @@ class FamilyPersonController extends commonController
         }
     }
 
+    /**
+     * Fields added for work type / education / shakh master.
+     * On update these preserve existing values when not supplied.
+     */
+    private function newPersonFields()
+    {
+        return [
+            'shakh', 'shakh_id',
+            'work_type', 'retired_title', 'retired_description',
+            'study_level', 'study_institute', 'study_course', 'study_year',
+            'education',
+        ];
+    }
+
+    /**
+     * Resolve shakh_id / legacy free-text shakh into personData.
+     * - shakh_id supplied: use it only when it points to an active master
+     *   record and sync the denormalized `shakh` text column with its name.
+     * - only shakh text supplied: keep the text and link the matching
+     *   master record (case-insensitive, trimmed) when one exists.
+     * - neither supplied: personData untouched (preserve existing values).
+     */
+    private function resolveShakhFields(array $input, array $personData)
+    {
+        if (!array_key_exists('shakh_id', $input) && !array_key_exists('shakh', $input)) {
+            return $personData;
+        }
+
+        if (array_key_exists('shakh_id', $input)) {
+            $shakhId = $this->blankToNull($input['shakh_id'] ?? null);
+            $personData['shakh_id'] = null;
+            if ($shakhId !== null) {
+                $shakh = $this->shakhModel::where('id', $shakhId)->where('is_deleted', 0)->first();
+                if ($shakh) {
+                    $personData['shakh_id'] = $shakh->id;
+                    $personData['shakh'] = $shakh->name;
+                } else {
+                    $personData['shakh'] = $this->blankToNull($input['shakh'] ?? null);
+                }
+            } else {
+                $personData['shakh'] = $this->blankToNull($input['shakh'] ?? null);
+            }
+            return $personData;
+        }
+
+        $text = $this->blankToNull($input['shakh'] ?? null);
+        $personData['shakh'] = $text;
+        $personData['shakh_id'] = null;
+        if ($text !== null) {
+            $match = $this->shakhModel::where('is_deleted', 0)
+                ->whereRaw('LOWER(TRIM(name)) = ?', [mb_strtolower(trim($text))])
+                ->first();
+            if ($match) {
+                $personData['shakh_id'] = $match->id;
+                $personData['shakh'] = $match->name;
+            }
+        }
+        return $personData;
+    }
+
+    /**
+     * Build the family payload returned by store/update responses.
+     */
+    private function familyPayload($family)
+    {
+        $familyPersons = $this->familyPersonModel::with('shakhMaster')
+            ->where('family_id', $family->id)
+            ->where('is_deleted', 0)
+            ->get();
+
+        return [
+            'familydetails' => $family->fresh(),
+            'familyPersons' => $familyPersons,
+        ];
+    }
+
     public function familyStore(Request $request)
     {
         if ($this->rp['societymodule']['familymembers']['add'] != 1) {
@@ -344,6 +422,15 @@ class FamilyPersonController extends commonController
             'famliypersons.*.age'                   => 'nullable|integer|min:0|max:150',
             'famliypersons.*.address_pincode'       => 'nullable|integer',
             'famliypersons.*.company_pincode'       => 'nullable|integer',
+            'famliypersons.*.shakh_id'              => 'nullable|integer',
+            'famliypersons.*.work_type'             => 'nullable|in:job,business,homemaker,retired,student,none',
+            'famliypersons.*.retired_title'         => 'nullable|string|max:255',
+            'famliypersons.*.retired_description'   => 'nullable|string',
+            'famliypersons.*.study_level'           => 'nullable|in:school,college',
+            'famliypersons.*.study_institute'       => 'nullable|string|max:255',
+            'famliypersons.*.study_course'          => 'nullable|string|max:255',
+            'famliypersons.*.study_year'            => 'nullable|string|max:255',
+            'famliypersons.*.education'             => 'nullable|string|max:255',
             'famliypersons.*.img'                   => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ], [
             'famliypersons.required'                        => 'Family persons are required',
@@ -359,6 +446,9 @@ class FamilyPersonController extends commonController
             'famliypersons.*.age.integer'                   => 'Age must be a number for member :position',
             'famliypersons.*.address_pincode.integer'       => 'Address pincode must be a number for member :position',
             'famliypersons.*.company_pincode.integer'       => 'Company pincode must be a number for member :position',
+            'famliypersons.*.shakh_id.integer'              => 'Shakh id must be a number for member :position',
+            'famliypersons.*.work_type.in'                  => 'Work type is invalid for member :position',
+            'famliypersons.*.study_level.in'                => 'Study level is invalid for member :position',
             'famliypersons.*.img.image'                     => 'Image must be a jpg, jpeg or png file for member :position',
             'famliypersons.*.img.mimes'                     => 'Image must be a jpg, jpeg or png file for member :position',
             'famliypersons.*.img.max'                       => 'Image must not be greater than 2MB for member :position',
@@ -424,12 +514,15 @@ class FamilyPersonController extends commonController
                 'marital_status', 'gender', 'job_role', 'company_name',
                 'company_house_no_building_name', 'company_landmark', 'company_area',
                 'business_intro', 'services', 'seo_keywords', 'shakh',
+                'work_type', 'retired_title', 'retired_description',
+                'study_level', 'study_institute', 'study_course', 'study_year',
+                'education',
             ];
             $intFields = [
                 'dob', 'age',
                 'address_country_id', 'address_state_id', 'address_city_id', 'address_pincode',
                 'company_country_id', 'company_state_id', 'company_city_id', 'company_pincode',
-                'business_category', 'business_subcategory',
+                'business_category', 'business_subcategory', 'shakh_id',
             ];
 
             $familyPersonIds = [];
@@ -446,6 +539,8 @@ class FamilyPersonController extends commonController
                 foreach (array_merge($stringFields, $intFields) as $field) {
                     $personData[$field] = $this->blankToNull($familyPerson[$field] ?? null);
                 }
+
+                $personData = $this->resolveShakhFields($familyPerson, $personData);
 
                 $personData['full_name'] = trim(
                     ($familyPerson['first_name'] ?? '') . ' ' .
@@ -512,7 +607,7 @@ class FamilyPersonController extends commonController
             DB::connection('dynamic_connection')->commit();
             DB::commit();
 
-            return $this->successresponse(200, 'message', 'Family and family persons created successfully');
+            return $this->successresponse(200, 'message', 'Family and family persons created successfully', 'family', $this->familyPayload($family));
 
         } catch (\Throwable $e) {
             DB::connection('dynamic_connection')->rollBack();
@@ -593,6 +688,7 @@ class FamilyPersonController extends commonController
             'company_city.city_name as company_city_name',
             'address_city.city_name as address_city_name'
         )
+        ->with('shakhMaster')
         ->get()
         ->each(function ($person) {
             $person->image_url = $person->img ? url('uploads/' . $person->img) : null;
@@ -618,7 +714,8 @@ class FamilyPersonController extends commonController
         }
 
         $familyPersons = $this->familyPersonModel
-            ::where('family_id', $id)
+            ::with('shakhMaster')
+            ->where('family_id', $id)
             ->where('is_deleted', 0)
             ->get();
 
@@ -931,6 +1028,15 @@ class FamilyPersonController extends commonController
             'famliypersons.*.age'                   => 'nullable|integer|min:0|max:150',
             'famliypersons.*.address_pincode'       => 'nullable|integer',
             'famliypersons.*.company_pincode'       => 'nullable|integer',
+            'famliypersons.*.shakh_id'              => 'nullable|integer',
+            'famliypersons.*.work_type'             => 'nullable|in:job,business,homemaker,retired,student,none',
+            'famliypersons.*.retired_title'         => 'nullable|string|max:255',
+            'famliypersons.*.retired_description'   => 'nullable|string',
+            'famliypersons.*.study_level'           => 'nullable|in:school,college',
+            'famliypersons.*.study_institute'       => 'nullable|string|max:255',
+            'famliypersons.*.study_course'          => 'nullable|string|max:255',
+            'famliypersons.*.study_year'            => 'nullable|string|max:255',
+            'famliypersons.*.education'             => 'nullable|string|max:255',
             'famliypersons.*.img'                   => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ], [
             'family_id.required'                            => 'Family id is required',
@@ -948,6 +1054,9 @@ class FamilyPersonController extends commonController
             'famliypersons.*.age.integer'                   => 'Age must be a number for member :position',
             'famliypersons.*.address_pincode.integer'       => 'Address pincode must be a number for member :position',
             'famliypersons.*.company_pincode.integer'       => 'Company pincode must be a number for member :position',
+            'famliypersons.*.shakh_id.integer'              => 'Shakh id must be a number for member :position',
+            'famliypersons.*.work_type.in'                  => 'Work type is invalid for member :position',
+            'famliypersons.*.study_level.in'                => 'Study level is invalid for member :position',
             'famliypersons.*.img.image'                     => 'Image must be a jpg, jpeg or png file for member :position',
             'famliypersons.*.img.mimes'                     => 'Image must be a jpg, jpeg or png file for member :position',
             'famliypersons.*.img.max'                       => 'Image must not be greater than 2MB for member :position',
@@ -1049,12 +1158,15 @@ class FamilyPersonController extends commonController
                 'marital_status', 'gender', 'job_role', 'company_name',
                 'company_house_no_building_name', 'company_landmark', 'company_area',
                 'business_intro', 'services', 'seo_keywords', 'shakh',
+                'work_type', 'retired_title', 'retired_description',
+                'study_level', 'study_institute', 'study_course', 'study_year',
+                'education',
             ];
             $intFields = [
                 'dob', 'age',
                 'address_country_id', 'address_state_id', 'address_city_id', 'address_pincode',
                 'company_country_id', 'company_state_id', 'company_city_id', 'company_pincode',
-                'business_category', 'business_subcategory',
+                'business_category', 'business_subcategory', 'shakh_id',
             ];
 
             $familyPersonIds    = [];
@@ -1075,6 +1187,17 @@ class FamilyPersonController extends commonController
                 foreach (array_merge($stringFields, $intFields) as $field) {
                     $personData[$field] = $this->blankToNull($familyPerson[$field] ?? null);
                 }
+
+                // ── Existing person: preserve new fields when not supplied ──
+                $existingId = $this->blankToNull($familyPerson['family_person_id'] ?? null);
+                if ($existingId) {
+                    foreach ($this->newPersonFields() as $newField) {
+                        if (!array_key_exists($newField, $familyPerson)) {
+                            unset($personData[$newField]);
+                        }
+                    }
+                }
+                $personData = $this->resolveShakhFields($familyPerson, $personData);
 
                 $personData['full_name'] = trim(
                     ($familyPerson['first_name'] ?? '') . ' ' .
@@ -1214,7 +1337,7 @@ class FamilyPersonController extends commonController
             DB::connection('dynamic_connection')->commit();
             DB::commit();
 
-            return $this->successresponse(200, 'message', 'Family and family persons updated successfully');
+            return $this->successresponse(200, 'message', 'Family and family persons updated successfully', 'family', $this->familyPayload($family));
 
         } catch (\Throwable $e) {
             DB::connection('dynamic_connection')->rollBack();
